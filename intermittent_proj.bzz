@@ -1,0 +1,103 @@
+#
+# In the ARGoS window, you can move the camera with the following commands:
+#
+# - Translation: W A S D Q E keys, right-click + drag
+# - Rotation: left-click + drag
+#
+# Selection: shift-click on the robot
+# Remove selection: shift-click elsewhere
+#
+# Bug: selection is finnicky in the top-down view (Camera 1).
+# Solution: switch to another camera and it'll work.
+#
+
+#
+# Compiling and running the code
+#
+# - In the ARGoS window: Pause the simulation (if it's not paused already)
+# - In the editor: do what you need, save, press the "Execute" button
+# - In the ARGoS window: Press the "Play", "Step", or "Fast Forward" buttons
+#
+
+#
+# This editor sucks.
+#
+# I know.
+#
+# But when it's open, it detects whether the open files have been modified elsewhere.
+# So open this editor and then open the file you wanna edit in your favorite editor.
+# When you save in your editor, the changes will be reflected here. Press Execute to compile and run.
+# If you want syntax highlighting, JavaScript is pretty similar to Buzz.
+#
+
+# This function is executed once at init time
+
+
+function init() {
+	#initialize it as "working"
+	state = 0
+	
+	curiosity = 0
+
+	stepsSinceStart = 0
+
+	usefullness = 1
+}
+
+#function evaluateState(){
+#}
+
+#function getFlow(){
+#}
+
+#function getCuriosity(){
+#}
+
+function act_State0(){
+	if(proximity[0].value > 0.04){
+		set_wheels(0.0,0.0)
+	}else{
+		set_wheels(-1.0,1.5)
+	}
+}
+
+function getDirectionOfOtherNetwork(){
+	gotox = -3
+	gotoy = -3
+	if(1){
+		gotox = 3
+		gotoy = 3
+	}
+	return 0
+}
+
+function act_State1(){
+	directionOfOtherNetwork = getDirectionOfOtherNetwork()
+	if(proximity[0].value > 0.4){
+		set_wheels(0,0)
+	}else{
+		gotop(1,kp*directionOfOtherNetwork)
+	}
+}
+
+
+# This function is executed at each time step
+# The main loop is controller by ARGoS
+function step() {
+	if(state == 0){
+		act_State0()
+	}
+
+	if(state == 1){
+		act_State1()
+	}
+}
+
+
+# This function is executed when you press the reset button
+function reset() {
+}
+
+# This function is executed once when you close the simulator
+function destroy() {
+}
