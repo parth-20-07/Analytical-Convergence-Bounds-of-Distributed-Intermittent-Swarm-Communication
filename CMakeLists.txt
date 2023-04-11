@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8.0)
-project(intermittent_proj)
+project(intermittent_model)
 
 # Compile in Release by default
 if(CMAKE_BUILD_TYPE STREQUAL "")
@@ -22,8 +22,8 @@ find_package(Buzz REQUIRED)
 include_directories(${BUZZ_C_INCLUDE_DIR})
 
 # Compile code
-add_library(intermittent_proj SHARED intermittent_proj.h intermittent_proj.cpp)
-target_link_libraries(intermittent_proj
+add_library(intermittent_model SHARED intermittent_model.h intermittent_model.cpp)
+target_link_libraries(intermittent_model
   ${BUZZ_LIBRARY}
   argos3core_simulator
   argos3plugin_simulator_dynamics2d

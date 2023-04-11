@@ -1,15 +1,16 @@
-#ifndef THRESHOLD_MODEL_H
-#define THRESHOLD_MODEL_H
+#ifndef INTERMITTENT_MODEL_H
+#define INTERMITTENT_MODEL_H
 
 #include <buzz/argos/buzz_loop_functions.h>
 #include <argos3/core/utility/math/rng.h>
+#include <argos3/plugins/simulator/media/rab_medium.h>
 
-class CMuleThreshold : public CBuzzLoopFunctions {
+class CIntermittentModel : public CBuzzLoopFunctions {
 
 public:
 
-   CMuleThreshold() {}
-   virtual ~CMuleThreshold() {}
+   CIntermittentModel() {}
+   virtual ~CIntermittentModel() {}
 
    /**
     * Executes user-defined initialization logic.
@@ -57,14 +58,8 @@ private:
 
 private:
 
-   /** 'delta' parameter at slide 16 */
-   Real m_fDelta;
-
-   /** 'alpha' parameter at slide 16 */
-   Real m_fAlpha;
-
-   /** The stimuli associated to the tasks */
-   std::vector<Real> m_vecStimuli;
+   /** The flow associated to the nodes */
+   std::vector<Real> m_vecFlow;
 
    /** The output file name */
    std::string m_strOutFile;

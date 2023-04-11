@@ -1,4 +1,4 @@
-#include "intermittent_proj.h"
+#include "intermittent_model.h"
 #include "buzz/buzzvm.h"
 
 /****************************************/
@@ -15,30 +15,30 @@ struct GetRobotData : public CBuzzLoopFunctions::COperation {
    /** The action happens here */
    virtual void operator()(const std::string& str_robot_id, buzzvm_t t_vm) {
    }
-      
 };
 
 /****************************************/
 /****************************************/
 
 /**
- * Functor to put the stimulus in the Buzz VMs.
+ * Functor to put the flow in the Buzz VMs.
  */
 struct PutFlow : public CBuzzLoopFunctions::COperation {
 
    /** Constructor */
-   PutFlow(){}
-   
-   /** The action happens here */
-   virtual void operator()(const std::string& str_robot_id, buzzvm_t t_vm) {
+   PutFlow(const std::vector<Real> &vec_flow) : m_vecFlow(vec_flow) {}
 
-   }
+   /** The action happens here */
+   virtual void operator()(const std::string& str_robot_id, buzzvm_t t_vm) {}
+
+   /** Calculated flow */
+   const std::vector<Real> &m_vecFlow;
 };
 
 /****************************************/
 /****************************************/
 
-void CMuleThreshold::Init(TConfigurationNode& t_tree) {
+void CIntermittentModel::Init(TConfigurationNode& t_tree) {
    /* Call parent Init() */
    CBuzzLoopFunctions::Init(t_tree);
    
@@ -48,28 +48,35 @@ void CMuleThreshold::Init(TConfigurationNode& t_tree) {
 /****************************************/
 /****************************************/
 
-void CMuleThreshold::Reset() {
-   /* Reset the stimuli */
+void CIntermittentModel::Reset() {
+   /* Reset the flow */
 }
 
 /****************************************/
 /****************************************/
 
-void CMuleThreshold::Destroy() {
+void CIntermittentModel::Destroy() {
    
 }
 
 /****************************************/
 /****************************************/
 
-void CMuleThreshold::PostStep() {
-   
-}
+void CIntermittentModel::PostStep() {
+      auto cMedium = GetSimulator().GetMedium<CRABMedium>("rab");
+      auto mapRABs = GetSpace().GetEntitiesByType("rab");
+      for (auto it = mapRABs.begin(); it != mapRABs.end(); ++it)
+      {
+         auto cRAB = *any_cast<CRABEquippedEntity *>(it->second);
+         auto setNbrs = cMedium.GetRABsCommunicatingWith(cRAB);
+         // todo
+      }
+   }
 
 /****************************************/
 /****************************************/
 
-bool CMuleThreshold::IsExperimentFinished() {
+bool CIntermittentModel::IsExperimentFinished() {
    /* Feel free to try out custom ending conditions */
    return false;
 }
@@ -77,19 +84,19 @@ bool CMuleThreshold::IsExperimentFinished() {
 /****************************************/
 /****************************************/
 
-int CMuleThreshold::GetNumRobots() const {
+int CIntermittentModel::GetNumRobots() const {
    return m_mapBuzzVMs.size();
 }
 
 /****************************************/
 /****************************************/
 
-void CMuleThreshold::BuzzBytecodeUpdated() {
-   /* Convey the stimuli to every robot */
-   BuzzForeachVM(PutStimuli(m_vecStimuli));
+void CIntermittentModel::BuzzBytecodeUpdated() {
+   /* Convey the flow to every robot */
+   BuzzForeachVM(PutFlow(m_vecFlow));
 }
 
 /****************************************/
 /****************************************/
 
-REGISTER_LOOP_FUNCTIONS(CThresholdModel, "threshold_model");
+REGISTER_LOOP_FUNCTIONS(CIntermittentModel, "intermittent_model");
