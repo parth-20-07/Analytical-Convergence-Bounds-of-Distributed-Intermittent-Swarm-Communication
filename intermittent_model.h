@@ -1,6 +1,8 @@
 #ifndef INTERMITTENT_MODEL_H
 #define INTERMITTENT_MODEL_H
 
+#include <iostream>
+#include <unordered_map>
 #include <buzz/argos/buzz_loop_functions.h>
 #include <argos3/core/utility/math/rng.h>
 #include <argos3/plugins/simulator/media/rab_medium.h>
@@ -60,6 +62,9 @@ private:
 
    /** The flow associated to the nodes */
    std::vector<Real> m_vecFlow;
+
+   /** The adjacency matrix of the graph*/
+   std::unordered_map<std::string, std::vector<std::string>> m_adjacency_hash;
 
    /** The output file name */
    std::string m_strOutFile;

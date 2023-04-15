@@ -43,6 +43,22 @@ void CIntermittentModel::Init(TConfigurationNode& t_tree) {
    CBuzzLoopFunctions::Init(t_tree);
    
    m_pcRNG = CRandom::CreateRNG("argos");
+
+   auto cMedium = GetSimulator().GetMedium<CRABMedium>("rab");
+   auto mapRABs = GetSpace().GetEntitiesByType("rab");
+   std::vector<std::string> buffer;
+   for (auto it = mapRABs.begin(); it != mapRABs.end(); ++it)
+   {
+      auto cRAB = *any_cast<CRABEquippedEntity *>(it->second);
+      auto setNbrs = cMedium.GetRABsCommunicatingWith(cRAB);
+      buffer.clear();
+      for (auto jt = setNbrs.begin(); jt != setNbrs.end(); ++jt)
+      {
+         buffer.push_back(jt.m_psElem->Data->GetId());
+      }
+      m_adjacency_hash[cRAB.GetId()] = buffer;
+      printf("%s", cRAB.GetId().c_str());
+   }
 }
 
 /****************************************/
@@ -50,34 +66,44 @@ void CIntermittentModel::Init(TConfigurationNode& t_tree) {
 
 void CIntermittentModel::Reset() {
    /* Reset the flow */
+   printf("HERE1");
 }
 
 /****************************************/
 /****************************************/
 
 void CIntermittentModel::Destroy() {
-   
+   printf("HERE2");
 }
 
 /****************************************/
 /****************************************/
 
 void CIntermittentModel::PostStep() {
-      auto cMedium = GetSimulator().GetMedium<CRABMedium>("rab");
-      auto mapRABs = GetSpace().GetEntitiesByType("rab");
-      for (auto it = mapRABs.begin(); it != mapRABs.end(); ++it)
+   auto cMedium = GetSimulator().GetMedium<CRABMedium>("rab");
+   auto mapRABs = GetSpace().GetEntitiesByType("rab");
+   std::vector<std::string> buffer;
+   for (auto it = mapRABs.begin(); it != mapRABs.end(); ++it)
+   {
+      auto cRAB = *any_cast<CRABEquippedEntity *>(it->second);
+      auto setNbrs = cMedium.GetRABsCommunicatingWith(cRAB);
+      buffer.clear();
+      for (auto jt = setNbrs.begin(); jt != setNbrs.end(); ++jt)
       {
-         auto cRAB = *any_cast<CRABEquippedEntity *>(it->second);
-         auto setNbrs = cMedium.GetRABsCommunicatingWith(cRAB);
-         // todo
+         buffer.push_back(jt.m_psElem->Data->GetId());
       }
+      m_adjacency_hash[cRAB.GetId()] = buffer;
+      printf("%s", cRAB.GetId().c_str());
    }
+   int all_pairs_path_lengths[GetNumRobots()][GetNumRobots()][GetNumRobots()];
+}
 
 /****************************************/
 /****************************************/
 
 bool CIntermittentModel::IsExperimentFinished() {
    /* Feel free to try out custom ending conditions */
+   printf("HERE3");
    return false;
 }
 
