@@ -1,16 +1,21 @@
 #ifndef INTERMITTENT_MODEL_H
 #define INTERMITTENT_MODEL_H
 
+#include <string.h>
 #include <iostream>
+#include "hash_combine.h"
 #include <unordered_map>
 #include <buzz/argos/buzz_loop_functions.h>
 #include <argos3/core/utility/math/rng.h>
 #include <argos3/plugins/simulator/media/rab_medium.h>
 
-class CIntermittentModel : public CBuzzLoopFunctions {
+#define NUMROBOTS 20
+#define INF 9999
+
+class CIntermittentModel : public CBuzzLoopFunctions
+{
 
 public:
-
    CIntermittentModel() {}
    virtual ~CIntermittentModel() {}
 
@@ -18,7 +23,7 @@ public:
     * Executes user-defined initialization logic.
     * @param t_tree The 'loop_functions' XML configuration tree.
     */
-   virtual void Init(TConfigurationNode& t_tree);
+   virtual void Init(TConfigurationNode &t_tree);
 
    /**
     * Executes user-defined reset logic.
@@ -32,7 +37,7 @@ public:
     * Executes user-defined logic right after a control step is executed.
     */
    virtual void PostStep();
-   
+
    /**
     * Returns true if the experiment is finished, false otherwise.
     *
@@ -55,16 +60,36 @@ public:
    virtual void BuzzBytecodeUpdated();
 
 private:
+   /**
+    * Solves the all-pairs shortest paths problem using the
+    * Floyd Warshall algorithm
+    *
+    */
+   void FloydWarshall();
+
+   /**
+    * Extracts the path for any two nodes after the Floyd Warshall algorithm is run
+    *
+    */
+   std::vector<std::vector<UInt16>> GetPath(UInt16 i, UInt16 j, UInt16 it = 0);
 
    int GetNumRobots() const;
 
 private:
+   /** A key which stores IDs for nodes A and B */
+   typedef std::tuple<std::string, std::string> ak;
 
    /** The flow associated to the nodes */
    std::vector<Real> m_vecFlow;
 
-   /** The adjacency matrix of the graph*/
-   std::unordered_map<std::string, std::vector<std::string>> m_adjacency_hash;
+   /** Cheap conversion between arbitrary node IDs and integral representation */
+   std::string m_id_to_key[NUMROBOTS];
+
+   /** The adjacency hash of the graph */
+   std::unordered_map<ak, UInt16> m_adjacency_hash;
+
+   /** Stores a list of backpointers to the current set of shortest paths for each node pair */
+   std::vector<UInt16> m_next[NUMROBOTS][NUMROBOTS];
 
    /** The output file name */
    std::string m_strOutFile;
@@ -73,7 +98,7 @@ private:
    std::ofstream m_cOutFile;
 
    /** Random number generator */
-   CRandom::CRNG* m_pcRNG;
+   CRandom::CRNG *m_pcRNG;
 };
 
 #endif

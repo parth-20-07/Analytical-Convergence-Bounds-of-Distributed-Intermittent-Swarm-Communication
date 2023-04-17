@@ -7,13 +7,15 @@
 /**
  * Functor to get data from the robots
  */
-struct GetRobotData : public CBuzzLoopFunctions::COperation {
+struct GetRobotData : public CBuzzLoopFunctions::COperation
+{
 
    /** Constructor */
-   GetRobotData(){}
+   GetRobotData() {}
 
    /** The action happens here */
-   virtual void operator()(const std::string& str_robot_id, buzzvm_t t_vm) {
+   virtual void operator()(const std::string &str_robot_id, buzzvm_t t_vm)
+   {
    }
 };
 
@@ -23,13 +25,14 @@ struct GetRobotData : public CBuzzLoopFunctions::COperation {
 /**
  * Functor to put the flow in the Buzz VMs.
  */
-struct PutFlow : public CBuzzLoopFunctions::COperation {
+struct PutFlow : public CBuzzLoopFunctions::COperation
+{
 
    /** Constructor */
    PutFlow(const std::vector<Real> &vec_flow) : m_vecFlow(vec_flow) {}
 
    /** The action happens here */
-   virtual void operator()(const std::string& str_robot_id, buzzvm_t t_vm) {}
+   virtual void operator()(const std::string &str_robot_id, buzzvm_t t_vm) {}
 
    /** Calculated flow */
    const std::vector<Real> &m_vecFlow;
@@ -38,86 +41,183 @@ struct PutFlow : public CBuzzLoopFunctions::COperation {
 /****************************************/
 /****************************************/
 
-void CIntermittentModel::Init(TConfigurationNode& t_tree) {
+void CIntermittentModel::Init(TConfigurationNode &t_tree)
+{
    /* Call parent Init() */
    CBuzzLoopFunctions::Init(t_tree);
-   
+   m_vecFlow.resize(NUMROBOTS);
+
    m_pcRNG = CRandom::CreateRNG("argos");
-
-   auto cMedium = GetSimulator().GetMedium<CRABMedium>("rab");
-   auto mapRABs = GetSpace().GetEntitiesByType("rab");
-   std::vector<std::string> buffer;
-   for (auto it = mapRABs.begin(); it != mapRABs.end(); ++it)
-   {
-      auto cRAB = *any_cast<CRABEquippedEntity *>(it->second);
-      auto setNbrs = cMedium.GetRABsCommunicatingWith(cRAB);
-      buffer.clear();
-      for (auto jt = setNbrs.begin(); jt != setNbrs.end(); ++jt)
-      {
-         buffer.push_back(jt.m_psElem->Data->GetId());
-      }
-      m_adjacency_hash[cRAB.GetId()] = buffer;
-      printf("%s", cRAB.GetId().c_str());
-   }
 }
 
 /****************************************/
 /****************************************/
 
-void CIntermittentModel::Reset() {
+void CIntermittentModel::Reset()
+{
    /* Reset the flow */
-   printf("HERE1");
 }
 
 /****************************************/
 /****************************************/
 
-void CIntermittentModel::Destroy() {
-   printf("HERE2");
+void CIntermittentModel::Destroy()
+{
 }
 
 /****************************************/
 /****************************************/
 
-void CIntermittentModel::PostStep() {
+void CIntermittentModel::PostStep()
+{
    auto cMedium = GetSimulator().GetMedium<CRABMedium>("rab");
    auto mapRABs = GetSpace().GetEntitiesByType("rab");
-   std::vector<std::string> buffer;
-   for (auto it = mapRABs.begin(); it != mapRABs.end(); ++it)
+   UInt16 i = 0, j = 0;
+   for (auto it = mapRABs.begin(); it != mapRABs.end(); ++it, ++i)
    {
       auto cRAB = *any_cast<CRABEquippedEntity *>(it->second);
       auto setNbrs = cMedium.GetRABsCommunicatingWith(cRAB);
-      buffer.clear();
-      for (auto jt = setNbrs.begin(); jt != setNbrs.end(); ++jt)
+      m_id_to_key[i] = cRAB.GetId();
+      j = 0;
+      for (auto jt = setNbrs.begin(); jt != setNbrs.end(); ++jt, ++j)
       {
-         buffer.push_back(jt.m_psElem->Data->GetId());
+         m_adjacency_hash[make_tuple(cRAB.GetId(), jt.m_psElem->Data->GetId())] = 1;
+         m_next[i][j].push_back(-1);
       }
-      m_adjacency_hash[cRAB.GetId()] = buffer;
-      printf("%s", cRAB.GetId().c_str());
    }
-   int all_pairs_path_lengths[GetNumRobots()][GetNumRobots()][GetNumRobots()];
+   // Collect all the shortest paths
+   FloydWarshall();
+   std::vector<std::vector<UInt16>> all_all_paths = {};
+   for (i = 0; i < NUMROBOTS; ++i)
+   {
+      for (j = 0; j < NUMROBOTS; ++j)
+      {
+         auto all_paths = GetPath(i, j);
+         all_all_paths.insert(all_all_paths.end(), all_paths.begin(), all_paths.end());
+      }
+   }
+   std::fill(m_vecFlow.begin(), m_vecFlow.end(), 0);
+   // Now we can brute force through everything and find the number 
+   // of shortest paths that pass through each node
+   for (auto path : all_all_paths)
+      for (auto node : path)
+         m_vecFlow[node]++;
 }
 
 /****************************************/
 /****************************************/
 
-bool CIntermittentModel::IsExperimentFinished() {
+void CIntermittentModel::FloydWarshall()
+{
+   UInt16 i, j, k;
+   for (k = 0; k < NUMROBOTS; k++)
+   {
+      // Pick all vertices as source one by one
+      for (i = 0; i < NUMROBOTS; i++)
+      {
+         // Pick all vertices as destination for the
+         // picked source
+         for (j = 0; j < NUMROBOTS; j++)
+         {
+            auto ij = make_tuple(m_id_to_key[i], m_id_to_key[j]);
+            auto ik = make_tuple(m_id_to_key[i], m_id_to_key[k]);
+            auto kj = make_tuple(m_id_to_key[k], m_id_to_key[j]);
+            if (m_adjacency_hash.find(ij) != m_adjacency_hash.end() &&
+                m_adjacency_hash.find(ik) != m_adjacency_hash.end() &&
+                m_adjacency_hash.find(kj) != m_adjacency_hash.end())
+            {
+               auto dist = (m_adjacency_hash[ik] + m_adjacency_hash[kj]);
+               if (m_adjacency_hash[ij] > dist)
+               {
+                  m_adjacency_hash[ij] = dist;
+                  m_next[i][j].clear();
+                  m_next[i][j].push_back(k);
+               }
+               else if ((m_adjacency_hash[ij] == dist) && (m_adjacency_hash[ij] != INF) && (k != j) && (k != i))
+               {
+                  m_next[i][j].push_back(k);
+               }
+            }
+         }
+      }
+   }
+}
+
+/****************************************/
+/****************************************/
+
+// Gross recursion
+std::vector<std::vector<UInt16>> CIntermittentModel::GetPath(UInt16 i, UInt16 j, UInt16 it)
+{
+   std::vector<std::vector<UInt16>> all_paths = {};
+   if (m_next[i][j].size() != 0)
+   {
+      for (auto k : m_next[i][j])
+      {
+         if (k == -1)
+            all_paths.push_back({i, j});
+         else
+         {
+            auto paths_I_K = GetPath(i, k, it + 1);
+            auto paths_K_J = GetPath(k, j, it + 1);
+            for (auto p_ik : paths_I_K)
+            {
+               if (p_ik.size() != 0)
+               {
+                  p_ik.pop_back();
+               }
+               for (auto p_kj : paths_K_J)
+               {
+                  auto tmp = p_ik;
+                  tmp.insert(tmp.end(), p_kj.begin(), p_kj.end());
+                  all_paths.push_back(tmp);
+               }
+            }
+         }
+      }
+   }
+   if (it == 0)
+   {
+      // Sort and then use std::unique to remove consecutive duplicates
+      // There is probably a faster way to combine these operations but oh well
+      std::sort(all_paths.begin(), all_paths.end(), [](const std::vector<UInt16> &a, const std::vector<UInt16> &b)
+                { return a.size() < b.size(); });
+      UInt16 min_ = INF;
+      for (UInt16 idx = 0; idx < all_paths.size(); ++idx)
+         if (all_paths[idx].size() <= min_)
+            min_ = all_paths[idx].size();
+         else
+            break;
+      all_paths.erase(std::remove_if(all_paths.begin(), all_paths.end(), [min_](std::vector<UInt16> path)
+                                     { return path.size() > min_; }),
+                      all_paths.end());
+      all_paths.erase(std::unique(all_paths.begin(), all_paths.end()), all_paths.end());
+   }
+   return all_paths;
+}
+
+/****************************************/
+/****************************************/
+
+bool CIntermittentModel::IsExperimentFinished()
+{
    /* Feel free to try out custom ending conditions */
-   printf("HERE3");
    return false;
 }
 
 /****************************************/
 /****************************************/
 
-int CIntermittentModel::GetNumRobots() const {
+int CIntermittentModel::GetNumRobots() const
+{
    return m_mapBuzzVMs.size();
 }
 
 /****************************************/
 /****************************************/
 
-void CIntermittentModel::BuzzBytecodeUpdated() {
+void CIntermittentModel::BuzzBytecodeUpdated()
+{
    /* Convey the flow to every robot */
    BuzzForeachVM(PutFlow(m_vecFlow));
 }

@@ -22,7 +22,7 @@ find_package(Buzz REQUIRED)
 include_directories(${BUZZ_C_INCLUDE_DIR})
 
 # Compile code
-add_library(intermittent_model SHARED intermittent_model.h intermittent_model.cpp)
+add_library(intermittent_model SHARED intermittent_model.h hash_combine.h intermittent_model.cpp)
 target_link_libraries(intermittent_model
   ${BUZZ_LIBRARY}
   argos3core_simulator
