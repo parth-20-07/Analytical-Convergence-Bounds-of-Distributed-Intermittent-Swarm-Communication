@@ -32,50 +32,90 @@
 
 # This function is executed once at init time
 
-	task = 0
-
-	networkID = 0
 	
-	curiosity = 0
-
-	stepsSinceStart = 0
-
-	usefullness = 1
-	
-	flow = {}
 
 function init() {
+	math.rng.setseed(id)
+
+	gotoNetworkOrigins[0][0] = -2;
+	gotoNetworkOrigins[0][1] = -2;
+
+	gotoNetworkOrigins[1][0] = 2;
+	gotoNetworkOrigins[1][1] = 2;
+
 	task = 0
 
-	networkID = 0
+	networkToReach = -1
+
+	networkID = -1
 	
-	curiosity = 0
+	curiosity = 0.0
 
 	stepsSinceStart = 0
 
-	usefullness = 1
+	utility = 1.0
+
+	a = 1.0
+	b = 1.0
+	c = 1.0
 	
-	flow = {}
+	flow = 1.0
+	connectability = 0.1
+
+	if((id == 0) || (id == 10)){
+		networkID = id/10
+		networkToReach = id/10
+	}
+
+	
 }
 
-#function evaluateState(){
-#}
-
-#function getFlow(){
-#}
-
-#function getCuriosity(){
-#}
 
 
+function Task0(){
+	#carry out task 0 
+}
 
-# This function is executed at each time step
-# The main loop is controller by ARGoS
-function step() {
+function goToNetworkOrigin( networkIndex ){
+	gotopointx = gotoNetworkOrigins[networkIndex][0]
+	gotopointy = gotoNetworkOrigins[networkIndex][1]
+	#
+	
+	
+}
+
+function evaluatePhi(){
+	return (a * utility) + (b * flow) - (c*(curiosity * connectability))
+}
+
+function updateVariables(){
 	stepsSinceStart = stepsSinceStart + 1
 
-	log(flow[0])
+	if(task == 0){
+		curiosity = curiosity + 1.0;
+		connectability = #distance between current position and goto
+		#check for if it is becoming a data mule. If it is, send a packet to inform the network.
+		if(evaluatePhi() < 0.0){
+			networkToReach = !networkID
+			task = 1
 
+			#broadcast to neighbors, "reset curiosoty"
+		}
+	}else{
+		#if a neighbor exists, if it is of unique network ID, change task and broadcast packets as needed. Adopt neighbors network ID.
+		#possibility for "handshake" task swapping
+
+	}
+}
+
+function step() {
+	if((id == networkID) || (task = 1)){
+		goToNetworkOrigin(networkToReach)
+	}else{
+		Task0()
+	}
+
+	updateVariables()
 }
 
 

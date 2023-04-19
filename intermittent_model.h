@@ -72,6 +72,7 @@ private:
    */
    void resetLists();
 
+   void findNetworks();
    /**
     * Extracts the path for any two nodes after the Floyd Warshall algorithm is run
     *
@@ -86,6 +87,8 @@ private:
 
    /** The flow associated to the nodes */
    std::vector<Real> m_vecFlow;
+
+   // int NetworkIn[NUMROBOTS] = {};
 
    /** Cheap conversion between arbitrary node IDs and integral representation */
    std::string m_id_to_key[NUMROBOTS];

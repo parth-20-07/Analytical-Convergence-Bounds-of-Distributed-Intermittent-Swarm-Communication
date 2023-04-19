@@ -35,19 +35,36 @@ struct PutFlow : public CBuzzLoopFunctions::COperation
 
    /** The action happens here */
    virtual void operator()(const std::string &str_robot_id, buzzvm_t t_vm) {
+      // std::string str_var = "flow";
       BuzzTableOpen(t_vm, "flow");
 
       for(int i = 0; i < NUMROBOTS; ++i) {
+         // buzzvm_pushs(t_vm, buzzvm_string_register(t_vm, str_robot_id.c_str(), 0));
+         // buzzvm_pushi(t_vm, static_cast<int>(m_vecFlow[i]));
+         // buzzvm_gstore(t_vm);
 
          if(_m_id_to_key[i] == str_robot_id){
             BuzzTablePut(t_vm, 0, static_cast<float>(m_vecFlow[i]));
-            
+         // //    buzzvm_pushs(t_vm, buzzvm_string_register(t_vm, str_var.c_str(), 0));
+         // //    buzzvm_pushi(t_vm, static_cast<int>(m_vecFlow[i]));
+         // //    buzzvm_gstore(t_vm);
          }
-         printf(_m_id_to_key[i].c_str());
-         printf("\n");
-         printf(str_robot_id.c_str());
+         
+         // printf(_m_id_to_key[i].c_str());
+         // printf("\n");
+         // printf(str_robot_id.c_str());
       }
       BuzzTableClose(t_vm);
+
+
+      /* Set the values of the table 'stimulus' in the Buzz VM */
+      // BuzzTableOpen(t_vm, "stimulus");
+      // for(int i = 0; i < m_vecFlow.size(); ++i) {
+      //    BuzzTablePut(t_vm, i, static_cast<float>(m_vecFlow[i]));
+      // }
+      // BuzzTableClose(t_vm);
+
+
    }
 
    /** Calculated flow */
@@ -106,6 +123,18 @@ void CIntermittentModel::resetLists(){
 /****************************************
 *****************************************/
 
+// void CIntermittentModel::findNetworks(){
+//    //find 2 agents without a path between them. 
+//    //assign them ID "1" and ID "2"
+//    //go outwards from each agent, 
+//    for(int i = 0; i < NUMROBOTS; i++){
+
+//    }
+// }
+
+/****************************************
+*****************************************/
+
 void CIntermittentModel::PostStep()
 {
    resetLists();
@@ -126,6 +155,8 @@ void CIntermittentModel::PostStep()
    }
    // Collect all the shortest paths
    FloydWarshall();
+
+   FindNetworks();
    std::vector<std::vector<UInt16>> all_all_paths = {};
    for (i = 0; i < NUMROBOTS; ++i)
    {
@@ -141,6 +172,9 @@ void CIntermittentModel::PostStep()
    for (auto path : all_all_paths)
       for (auto node : path)
          m_vecFlow[node]++;
+
+
+   BuzzForeachVM(PutFlow(m_vecFlow, m_id_to_key));
 }
 
 /****************************************/
