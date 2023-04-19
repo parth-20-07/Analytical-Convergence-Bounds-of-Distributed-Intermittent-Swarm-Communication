@@ -68,6 +68,11 @@ private:
    void FloydWarshall();
 
    /**
+    * resets all the vectors so they can be populated by poststep
+   */
+   void resetLists();
+
+   /**
     * Extracts the path for any two nodes after the Floyd Warshall algorithm is run
     *
     */
@@ -89,7 +94,7 @@ private:
    std::unordered_map<ak, UInt16> m_adjacency_hash;
 
    /** Stores a list of backpointers to the current set of shortest paths for each node pair */
-   std::vector<UInt16> m_next[NUMROBOTS][NUMROBOTS];
+   std::vector<int16_t> m_next[NUMROBOTS][NUMROBOTS];
 
    /** The output file name */
    std::string m_strOutFile;

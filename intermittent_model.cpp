@@ -29,13 +29,30 @@ struct PutFlow : public CBuzzLoopFunctions::COperation
 {
 
    /** Constructor */
-   PutFlow(const std::vector<Real> &vec_flow) : m_vecFlow(vec_flow) {}
+   PutFlow(const std::vector<Real> &vec_flow, std::string* m_id_to_key) : m_vecFlow(vec_flow) {
+      _m_id_to_key = m_id_to_key;
+   }
 
    /** The action happens here */
-   virtual void operator()(const std::string &str_robot_id, buzzvm_t t_vm) {}
+   virtual void operator()(const std::string &str_robot_id, buzzvm_t t_vm) {
+      BuzzTableOpen(t_vm, "flow");
+
+      for(int i = 0; i < NUMROBOTS; ++i) {
+
+         if(_m_id_to_key[i] == str_robot_id){
+            BuzzTablePut(t_vm, 0, static_cast<float>(m_vecFlow[i]));
+            
+         }
+         printf(_m_id_to_key[i].c_str());
+         printf("\n");
+         printf(str_robot_id.c_str());
+      }
+      BuzzTableClose(t_vm);
+   }
 
    /** Calculated flow */
    const std::vector<Real> &m_vecFlow;
+   std::string* _m_id_to_key;
 };
 
 /****************************************/
@@ -68,8 +85,30 @@ void CIntermittentModel::Destroy()
 /****************************************/
 /****************************************/
 
+void CIntermittentModel::resetLists(){
+
+   //reset the flow associated
+   m_vecFlow = std::vector<Real>();
+
+   //reset the adjacency hash
+   m_adjacency_hash = std::unordered_map<ak, UInt16>();
+
+
+   //reset all backpointers
+   for(int i = 0; i < NUMROBOTS; i++){
+      for(int j = 0; j < NUMROBOTS; j++){
+         m_next[i][j] = std::vector<int16_t>();
+      }
+   }
+
+}
+
+/****************************************
+*****************************************/
+
 void CIntermittentModel::PostStep()
 {
+   resetLists();
    auto cMedium = GetSimulator().GetMedium<CRABMedium>("rab");
    auto mapRABs = GetSpace().GetEntitiesByType("rab");
    UInt16 i = 0, j = 0;
@@ -109,7 +148,8 @@ void CIntermittentModel::PostStep()
 
 void CIntermittentModel::FloydWarshall()
 {
-   UInt16 i, j, k;
+   UInt16 i, j;
+   int16_t k;
    for (k = 0; k < NUMROBOTS; k++)
    {
       // Pick all vertices as source one by one
@@ -219,7 +259,7 @@ int CIntermittentModel::GetNumRobots() const
 void CIntermittentModel::BuzzBytecodeUpdated()
 {
    /* Convey the flow to every robot */
-   BuzzForeachVM(PutFlow(m_vecFlow));
+   BuzzForeachVM(PutFlow(m_vecFlow, m_id_to_key));
 }
 
 /****************************************/

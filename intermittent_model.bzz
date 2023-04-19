@@ -32,16 +32,30 @@
 
 # This function is executed once at init time
 
+	task = 0
 
-function init() {
-	#initialize it as "working"
-	state = 0
+	networkID = 0
 	
 	curiosity = 0
 
 	stepsSinceStart = 0
 
 	usefullness = 1
+	
+	flow = {}
+
+function init() {
+	task = 0
+
+	networkID = 0
+	
+	curiosity = 0
+
+	stepsSinceStart = 0
+
+	usefullness = 1
+	
+	flow = {}
 }
 
 #function evaluateState(){
@@ -53,44 +67,15 @@ function init() {
 #function getCuriosity(){
 #}
 
-function act_State0(){
-	if(proximity[0].value > 0.04){
-		set_wheels(0.0,0.0)
-	}else{
-		set_wheels(-1.0,1.5)
-	}
-}
-
-function getDirectionOfOtherNetwork(){
-	gotox = -3
-	gotoy = -3
-	if(1){
-		gotox = 3
-		gotoy = 3
-	}
-	return 0
-}
-
-function act_State1(){
-	directionOfOtherNetwork = getDirectionOfOtherNetwork()
-	if(proximity[0].value > 0.4){
-		set_wheels(0,0)
-	}else{
-		gotop(1,kp*directionOfOtherNetwork)
-	}
-}
 
 
 # This function is executed at each time step
 # The main loop is controller by ARGoS
 function step() {
-	if(state == 0){
-		act_State0()
-	}
+	stepsSinceStart = stepsSinceStart + 1
 
-	if(state == 1){
-		act_State1()
-	}
+	log(flow[0])
+
 }
 
 

@@ -1,7 +1,6 @@
 file(REMOVE_RECURSE
-  "intermittent_model_autogen"
-  "CMakeFiles/intermittent_model_autogen.dir/AutogenOldSettings.cmake"
   "CMakeFiles/intermittent_model_autogen"
+  "intermittent_model_autogen/mocs_compilation.cpp"
 )
 
 # Per-language clean rules from dependency scanning.

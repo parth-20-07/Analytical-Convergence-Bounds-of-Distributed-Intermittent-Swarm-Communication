@@ -1,6 +1,7 @@
 file(REMOVE_RECURSE
+  "CMakeFiles/intermittent_model_autogen.dir/AutogenUsed.txt"
+  "CMakeFiles/intermittent_model_autogen.dir/ParseCache.txt"
   "intermittent_model_autogen"
-  "CMakeFiles/intermittent_model_autogen.dir/AutogenOldSettings.cmake"
   "CMakeFiles/intermittent_model.dir/intermittent_model.cpp.o"
   "CMakeFiles/intermittent_model.dir/intermittent_model_autogen/mocs_compilation.cpp.o"
   "libintermittent_model.pdb"
