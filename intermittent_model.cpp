@@ -1,5 +1,8 @@
 #include "intermittent_model.h"
 #include "buzz/buzzvm.h"
+#include <argos3/core/utility/logging/argos_log.h>
+#include <chrono>
+#include <thread>
 
 /****************************************/
 /****************************************/
@@ -36,25 +39,30 @@ struct PutFlow : public CBuzzLoopFunctions::COperation
    /** The action happens here */
    virtual void operator()(const std::string &str_robot_id, buzzvm_t t_vm) {
       // std::string str_var = "flow";
+
+      // printf("testingprintf\n");
+
       BuzzTableOpen(t_vm, "flow");
 
       for(int i = 0; i < NUMROBOTS; ++i) {
+         
          // buzzvm_pushs(t_vm, buzzvm_string_register(t_vm, str_robot_id.c_str(), 0));
          // buzzvm_pushi(t_vm, static_cast<int>(m_vecFlow[i]));
          // buzzvm_gstore(t_vm);
 
          if(_m_id_to_key[i] == str_robot_id){
             BuzzTablePut(t_vm, 0, static_cast<float>(m_vecFlow[i]));
-         // //    buzzvm_pushs(t_vm, buzzvm_string_register(t_vm, str_var.c_str(), 0));
-         // //    buzzvm_pushi(t_vm, static_cast<int>(m_vecFlow[i]));
-         // //    buzzvm_gstore(t_vm);
+            // buzzvm_pushs(t_vm, buzzvm_string_register(t_vm, str_var.c_str(), 0));
+            // buzzvm_pushi(t_vm, static_cast<in   t>(m_vecFlow[i]));
+            // buzzvm_gstore(t_vm);   
+            LOG << " " << _m_id_to_key[i].c_str() << " " << std::endl
+                << str_robot_id.c_str() << std::endl;
+
+            printf("put_in_bot\n %d", i);
          }
-         
-         // printf(_m_id_to_key[i].c_str());
-         // printf("\n");
-         // printf(str_robot_id.c_str());
+         // BuzzTablePut(t_vm, i, static_cast<float>(m_vecFlow[i]));
       }
-      BuzzTableClose(t_vm);
+      
 
 
       /* Set the values of the table 'stimulus' in the Buzz VM */
@@ -62,7 +70,8 @@ struct PutFlow : public CBuzzLoopFunctions::COperation
       // for(int i = 0; i < m_vecFlow.size(); ++i) {
       //    BuzzTablePut(t_vm, i, static_cast<float>(m_vecFlow[i]));
       // }
-      // BuzzTableClose(t_vm);
+      BuzzTableClose(t_vm);
+      LOG << std::endl;
 
 
    }
@@ -78,6 +87,9 @@ struct PutFlow : public CBuzzLoopFunctions::COperation
 void CIntermittentModel::Init(TConfigurationNode &t_tree)
 {
    /* Call parent Init() */
+
+   printf("init\n");
+
    CBuzzLoopFunctions::Init(t_tree);
    m_vecFlow.resize(NUMROBOTS);
 
@@ -90,6 +102,8 @@ void CIntermittentModel::Init(TConfigurationNode &t_tree)
 void CIntermittentModel::Reset()
 {
    /* Reset the flow */
+
+   printf("resetting\n");
 }
 
 /****************************************/
@@ -137,6 +151,12 @@ void CIntermittentModel::resetLists(){
 
 void CIntermittentModel::PostStep()
 {
+
+   printf("starting poststep\n");
+   
+   std::chrono::seconds dura(0.5);
+   std::this_thread::sleep_for( dura );
+
    resetLists();
    auto cMedium = GetSimulator().GetMedium<CRABMedium>("rab");
    auto mapRABs = GetSpace().GetEntitiesByType("rab");
@@ -147,16 +167,24 @@ void CIntermittentModel::PostStep()
       auto setNbrs = cMedium.GetRABsCommunicatingWith(cRAB);
       m_id_to_key[i] = cRAB.GetId();
       j = 0;
+
+      printf("populate adjaceny hash\n");
+      print(i);
+      printf("\n");
+      std::this_thread::sleep_for( dura );
       for (auto jt = setNbrs.begin(); jt != setNbrs.end(); ++jt, ++j)
       {
          m_adjacency_hash[make_tuple(cRAB.GetId(), jt.m_psElem->Data->GetId())] = 1;
          m_next[i][j].push_back(-1);
       }
    }
+
+
+   printf("starting floyd warshall\n");
+   std::this_thread::sleep_for( dura );
    // Collect all the shortest paths
    FloydWarshall();
 
-   FindNetworks();
    std::vector<std::vector<UInt16>> all_all_paths = {};
    for (i = 0; i < NUMROBOTS; ++i)
    {
@@ -173,8 +201,15 @@ void CIntermittentModel::PostStep()
       for (auto node : path)
          m_vecFlow[node]++;
 
+   printf("found flow\n");
+   std::this_thread::sleep_for( dura );
+   // LOG << " to update ";
+   // BuzzBytecodeUpdated();
 
+   printf("put for each\n");
+   std::this_thread::sleep_for( dura );
    BuzzForeachVM(PutFlow(m_vecFlow, m_id_to_key));
+
 }
 
 /****************************************/
@@ -293,7 +328,8 @@ int CIntermittentModel::GetNumRobots() const
 void CIntermittentModel::BuzzBytecodeUpdated()
 {
    /* Convey the flow to every robot */
-   BuzzForeachVM(PutFlow(m_vecFlow, m_id_to_key));
+
+   // BuzzForeachVM(PutFlow(m_vecFlow, m_id_to_key));
 }
 
 /****************************************/

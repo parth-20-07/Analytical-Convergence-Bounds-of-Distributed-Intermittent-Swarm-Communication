@@ -1,0 +1,40 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/akshay/Documents/Swarm/Swarm_IntermittentProj/hash_combine.h
+tuple
+-
+
+/home/akshay/Documents/Swarm/Swarm_IntermittentProj/intermittent_model.cpp
+intermittent_model.h
+/home/akshay/Documents/Swarm/Swarm_IntermittentProj/intermittent_model.h
+buzz/buzzvm.h
+/home/akshay/Documents/Swarm/Swarm_IntermittentProj/buzz/buzzvm.h
+argos3/core/utility/logging/argos_log.h
+-
+chrono
+-
+thread
+-
+
+/home/akshay/Documents/Swarm/Swarm_IntermittentProj/intermittent_model.h
+string.h
+-
+iostream
+-
+hash_combine.h
+/home/akshay/Documents/Swarm/Swarm_IntermittentProj/hash_combine.h
+unordered_map
+-
+buzz/argos/buzz_loop_functions.h
+-
+argos3/core/utility/math/rng.h
+-
+argos3/plugins/simulator/media/rab_medium.h
+-
+
