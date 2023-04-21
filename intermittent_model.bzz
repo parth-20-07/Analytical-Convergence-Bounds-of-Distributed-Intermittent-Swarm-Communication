@@ -1,82 +1,91 @@
-	
-	taskID = 0
-
-	networkToReach = -1
-
-	networkID = -1
-	
-	curiosity = 0.0
-
-	stepsSinceStart = 0
-
-	utility = 1.0
-
-	a = 1.0
-	b = 1.0
-	
-	#flow = 1.0
-	connectability = 0.1
+taskID = 0
+networkToReach = -1
+networkID = -1
+curiosity = 0.0
+stepsSinceStart = 0
+utility = 1.0
+a = 1.0
+b = 1.0
+#flow = 1.0
+connectability = 0.1
+rotationRadius = 2.0
 
 
 function init() {
 	math.rng.setseed(id)
-
 	#gotoNetworkOrigins[0][0] = -2;
 	#gotoNetworkOrigins[0][1] = -2;
-
 	#gotoNetworkOrigins[1][0] = 2;
 	#gotoNetworkOrigins[1][1] = 2;
-
 	taskID = 0
-
 	networkToReach = -1
-
 	networkID = -1
-	
 	curiosity = 0.0
-
 	stepsSinceStart = 0
-
 	utility = 1.0
-
 	a = 1.0
 	b = 1.0
-	
 	#flow = 1.0
 	connectability = 0.1
-
 	if((id == 0)){
 		networkID = 0
 		networkToReach = 0
 	}
-
 	if((id == 1)){
 		networkID = 1
 		networkToReach = 1
 	}	
 }
 
+function calculateDistanceFromCentroid(){
+	{x,y,z} = pose.position
+	distance = math.sqrt((x-centerX)^2 + (y-centerY)^2)
+	return distance
+}
 
+function isRobotOrientedTowardsCentroid(){
+	{y,p,r} = pose.orientation
+	{x,y,z} = pose.position
+	theta = math.atan2((centerY-y),(centerX-x))
+	if (theta != y)
+		{
+			return false
+		}
+	return true
+}
+
+function orientTowardsCentroid(){
+	gotop(0,1.0)
+}
+
+function moveTowardsCentroid(){
+	gotop(1.0,0)
+}
+
+function rotateAroundCentroid(){
+	gotoc(5.0,3.0)
+}
 
 function Task0(){
-	#carry out task 0 
+	if(calculateDistanceFromCentroid()>= rotationRadius){
+		if(isRobotOrientedTowardsCentroid())
+			moveTowardsCentroid()
+		else
+			orientTowardsCentroid()
+	}
+	else{
+		rotateAroundCentroid()
+	}
 }
 
 function goToNetworkOrigin( networkIndex ){
+	centerX = -2
+	centerY = -2
 
-	goToPointx = -2
-	goToPointy = -2 	
-	
 	if(networkIndex == 1){
-		goToPointx = 2
-		goToPointy = 2 		
+		centerX = 2
+		centerY = 2
 	}
-	
-	#gotopointx = gotoNetworkOrigins[networkIndex][0]
-	#gotopointy = gotoNetworkOrigins[networkIndex][1]
-	#
-	
-	
 }
 
 function evaluatePhi(){
