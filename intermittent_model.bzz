@@ -9,6 +9,8 @@ b = 1.0
 #flow = 1.0
 connectability = 0.1
 rotationRadius = 2.0
+centerX = 0
+centerY = 0
 
 
 function init() {
@@ -38,40 +40,50 @@ function init() {
 }
 
 function calculateDistanceFromCentroid(){
-	{x,y,z} = pose.position
-	distance = math.sqrt((x-centerX)^2 + (y-centerY)^2)
+	posX = pose.position.x
+	posY = pose.position.y
+
+	eX = (posX-centerX)^2
+	eY = (posY-centerY)^2
+	distance = math.sqrt(eX + eY)
+
 	return distance
 }
 
-function isRobotOrientedTowardsCentroid(){
-	{y,p,r} = pose.orientation
-	{x,y,z} = pose.position
-	theta = math.atan2((centerY-y),(centerX-x))
-	if (theta != y)
-		{
-			return false
-		}
-	return true
-}
-
-function orientTowardsCentroid(){
-	gotop(0,1.0)
-}
-
-function moveTowardsCentroid(){
-	gotop(1.0,0)
-}
-
 function rotateAroundCentroid(){
-	gotoc(5.0,3.0)
+	# gotop(10.0,0.0)
+	# log(id, "Revolving Around centroid")
 }
 
 function Task0(){
 	if(calculateDistanceFromCentroid()>= rotationRadius){
-		if(isRobotOrientedTowardsCentroid())
-			moveTowardsCentroid()
-		else
-			orientTowardsCentroid()
+		rotationSpeed = 2.5
+		yaw = pose.orientation.yaw
+
+		posX = pose.position.x
+		posY = pose.position.y
+
+		dX = centerX - posX
+		dY = centerY - posY
+
+		theta = math.atan(dY, dX)
+		# Orienting towards centroid
+		if (theta > yaw+0.05)
+			{
+				set_wheels(-rotationSpeed,rotationSpeed)
+				return
+			}
+		else if (theta < yaw-0.05)
+			{
+				set_wheels(rotationSpeed,-rotationSpeed)
+				return
+			}
+		
+			# Moving towards centroid
+		log(id, "D: ", distance, " Moving towards centroid")
+		movementSpeed = 10.0
+		set_wheels(movementSpeed,movementSpeed)
+		return
 	}
 	else{
 		rotateAroundCentroid()
@@ -79,12 +91,13 @@ function Task0(){
 }
 
 function goToNetworkOrigin( networkIndex ){
-	centerX = -2
-	centerY = -2
-
 	if(networkIndex == 1){
 		centerX = 2
 		centerY = 2
+	}
+	else{
+		centerX = -2
+		centerY = -2
 	}
 }
 
