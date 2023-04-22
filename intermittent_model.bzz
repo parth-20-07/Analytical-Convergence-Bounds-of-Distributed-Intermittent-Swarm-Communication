@@ -8,17 +8,12 @@ a = 1.0
 b = 1.0
 #flow = 1.0
 connectability = 0.1
-rotationRadius = 2.0
 centerX = 0
 centerY = 0
 
 
 function init() {
 	math.rng.setseed(id)
-	#gotoNetworkOrigins[0][0] = -2;
-	#gotoNetworkOrigins[0][1] = -2;
-	#gotoNetworkOrigins[1][0] = 2;
-	#gotoNetworkOrigins[1][1] = 2;
 	taskID = 0
 	networkToReach = -1
 	networkID = -1
@@ -39,55 +34,81 @@ function init() {
 	}	
 }
 
-function calculateDistanceFromCentroid(){
+function calculateDistanceFromPoint(pointX, pointY){
 	posX = pose.position.x
 	posY = pose.position.y
 
-	eX = (posX-centerX)^2
-	eY = (posY-centerY)^2
+	eX = (posX-pointX)^2
+	eY = (posY-pointY)^2
 	distance = math.sqrt(eX + eY)
 
 	return distance
 }
 
-function rotateAroundCentroid(){
-	# gotop(10.0,0.0)
-	# log(id, "Revolving Around centroid")
+function orientTowardsPoint(pointX, pointY){
+	rotationSpeed = 2.5
+	yaw = pose.orientation.yaw
+
+	posX = pose.position.x
+	posY = pose.position.y
+
+	dX = pointX - posX
+	dY = pointY - posY
+
+	theta = math.atan(dY, dX)
+	yawError = 0.1
+	# Orienting towards centroid
+	if (theta > yaw+yawError)
+		{
+			set_wheels(-rotationSpeed,rotationSpeed)
+			log(id, "D: ", distance, " Orienting towards centroid")
+			return 0
+		}
+	else if (theta < yaw-yawError)
+		{
+			set_wheels(rotationSpeed,-rotationSpeed)
+			log(id, "D: ", distance, " Orienting towards centroid")
+			return 0
+		}
+	log(id, "D: ", distance, " Robot Already Oriented")
+	return 1
 }
 
+function moveTowardsPoint(){
+	log(id, "D: ", distance, " Moving towards Point")
+	movementSpeed = 10.0
+	set_wheels(movementSpeed,movementSpeed)
+}
+
+function rotateAroundCentroid(){
+	gotop(10.0,0.0)
+	log(id, "Revolving Around centroid")
+}
+
+
+# Call this function when you want to perform task 0
 function Task0(){
-	if(calculateDistanceFromCentroid()>= rotationRadius){
-		rotationSpeed = 2.5
-		yaw = pose.orientation.yaw
-
-		posX = pose.position.x
-		posY = pose.position.y
-
-		dX = centerX - posX
-		dY = centerY - posY
-
-		theta = math.atan(dY, dX)
-		# Orienting towards centroid
-		if (theta > yaw+0.05)
-			{
-				set_wheels(-rotationSpeed,rotationSpeed)
-				return
-			}
-		else if (theta < yaw-0.05)
-			{
-				set_wheels(rotationSpeed,-rotationSpeed)
-				return
-			}
-		
-			# Moving towards centroid
-		log(id, "D: ", distance, " Moving towards centroid")
-		movementSpeed = 10.0
-		set_wheels(movementSpeed,movementSpeed)
+	rotationRadius = 1.0
+	if(calculateDistanceFromPoint(centerX,centerY)>= rotationRadius){
+		if(orientTowardsPoint(centerX,centerY) == 1){
+			moveTowardsPoint()
+		}
 		return
 	}
 	else{
 		rotateAroundCentroid()
 	}
+}
+
+# Call this function when you want to move to a particular point (x,y)
+function travelToPoint(pointX, pointY){
+	errorRadius = 0.2
+	if(calculateDistanceFromPoint(centerX,centerY)>= errorRadius){
+		if(orientTowardsPoint(centerX,centerY) == 1){
+			moveTowardsPoint()
+		}
+	}
+
 }
 
 function goToNetworkOrigin( networkIndex ){
