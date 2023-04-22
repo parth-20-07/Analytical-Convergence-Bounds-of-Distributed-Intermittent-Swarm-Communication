@@ -1,3 +1,4 @@
+############################################ Variables ############################################
 taskID = 0
 networkToReach = -1
 networkID = -1
@@ -10,8 +11,9 @@ b = 1.0
 connectability = 0.1
 centerX = 0
 centerY = 0
+############################################ Variables ############################################
 
-
+############################################ Main Methods ############################################
 function init() {
 	math.rng.setseed(id)
 	taskID = 0
@@ -34,6 +36,66 @@ function init() {
 	}	
 }
 
+function step() {
+	isLeader = ((id == 0) or (id == 10))
+	if( isLeader or (taskID == 1)){
+		goToNetworkOrigin(networkToReach)
+	}else{
+		Task0()
+	}
+
+	updateVariables()
+}
+
+
+function reset() {
+}
+
+function destroy() {
+}
+############################################ Main Methods ############################################
+
+############################################ Call Methods ############################################
+# Call this function to determine the centroid of the network
+function goToNetworkOrigin( networkIndex ){
+	if(networkIndex == 1){
+		centerX = 2
+		centerY = 2
+	}
+	else{
+		centerX = -2
+		centerY = -2
+	}
+}
+
+# Call this function when you want to perform Task 0
+function Task0(){
+	rotationRadius = 1.0
+	if(calculateDistanceFromPoint(centerX,centerY)>= rotationRadius){
+		if(orientTowardsPoint(centerX,centerY) == 1){
+			moveTowardsPoint()
+		}
+		return
+	}
+	else{
+		rotateAroundCentroid()
+	}
+}
+
+# Call this function when you want to move to a particular point (x,y)
+function travelToPoint(pointX, pointY){
+	errorRadius = 0.2
+	if(calculateDistanceFromPoint(centerX,centerY)>= errorRadius){
+		if(orientTowardsPoint(centerX,centerY) == 1){
+			moveTowardsPoint()
+		}
+	}
+}
+
+############################################ Call Methods ############################################
+
+
+############################################ Supporting Methods ############################################
 function calculateDistanceFromPoint(pointX, pointY){
 	posX = pose.position.x
 	posY = pose.position.y
@@ -43,6 +105,31 @@ function calculateDistanceFromPoint(pointX, pointY){
 	distance = math.sqrt(eX + eY)
 
 	return distance
+}
+
+function updateVariables(){
+	stepsSinceStart = stepsSinceStart + 1
+
+	if(taskID == 0){
+		curiosity = curiosity + 1.0;
+		#connectability = math.sqrt()#distance between current position and goto
+		#check for if it is becoming a data mule. If it is, send a packet to inform the network.
+		if(evaluatePhi() < 0.0){
+			if(networkToReach == 0){
+				networkToReach = 1
+			}else{
+				networkToReach = 0
+			}
+			#networkToReach = !networkID
+			taskID = 1
+			#broadcast to neighbors, "reset curiosoty"
+		}
+	}
+	#else{
+		#if a neighbor exists, if it is of unique network ID, change task and broadcast packets as needed. Adopt neighbors network ID.
+		#possibility for "handshake" task swapping
+		
+	#}
 }
 
 function orientTowardsPoint(pointX, pointY){
@@ -85,88 +172,7 @@ function rotateAroundCentroid(){
 	log(id, "Revolving Around centroid")
 }
 
-
-# Call this function when you want to perform task 0
-function Task0(){
-	rotationRadius = 1.0
-	if(calculateDistanceFromPoint(centerX,centerY)>= rotationRadius){
-		if(orientTowardsPoint(centerX,centerY) == 1){
-			moveTowardsPoint()
-		}
-		return
-	}
-	else{
-		rotateAroundCentroid()
-	}
-}
-
-# Call this function when you want to move to a particular point (x,y)
-function travelToPoint(pointX, pointY){
-	errorRadius = 0.2
-	if(calculateDistanceFromPoint(centerX,centerY)>= errorRadius){
-		if(orientTowardsPoint(centerX,centerY) == 1){
-			moveTowardsPoint()
-		}
-	}
-
-}
-
-function goToNetworkOrigin( networkIndex ){
-	if(networkIndex == 1){
-		centerX = 2
-		centerY = 2
-	}
-	else{
-		centerX = -2
-		centerY = -2
-	}
-}
-
 function evaluatePhi(){
 	return (a * 1) - (b*(curiosity * connectability))
 }
-
-function updateVariables(){
-	stepsSinceStart = stepsSinceStart + 1
-
-	if(taskID == 0){
-		curiosity = curiosity + 1.0;
-		#connectability = math.sqrt()#distance between current position and goto
-		#check for if it is becoming a data mule. If it is, send a packet to inform the network.
-		if(evaluatePhi() < 0.0){
-			if(networkToReach == 0){
-				networkToReach = 1
-			}else{
-				networkToReach = 0
-			}
-			#networkToReach = !networkID
-			taskID = 1
-			#broadcast to neighbors, "reset curiosoty"
-		}
-	}
-	#else{
-		#if a neighbor exists, if it is of unique network ID, change task and broadcast packets as needed. Adopt neighbors network ID.
-		#possibility for "handshake" task swapping
-		
-	#}
-}
-
-function step() {
-	isLeader = ((id == 0) or (id == 10))
-	if( isLeader or (taskID == 1)){
-		goToNetworkOrigin(networkToReach)
-	}else{
-		Task0()
-	}
-
-	updateVariables()
-}
-
-
-# This function is executed when you press the reset button
-function reset() {
-}
-
-# This function is executed once when you close the simulator
-function destroy() {
-}
+############################################ Supporting Methods ############################################
