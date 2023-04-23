@@ -9,7 +9,7 @@
 #include <argos3/core/utility/math/rng.h>
 #include <argos3/plugins/simulator/media/rab_medium.h>
 
-#define NUMROBOTS 20
+#define NUMROBOTS 30
 #define INF 9999
 
 class CIntermittentModel : public CBuzzLoopFunctions
@@ -83,7 +83,7 @@ private:
 
 private:
    /** A key which stores IDs for nodes A and B */
-   typedef std::tuple<std::string, std::string> ak;
+   typedef std::tuple<ssize_t, ssize_t> ak;
 
    /** The flow associated to the nodes */
    std::vector<Real> m_vecFlow;
@@ -91,7 +91,7 @@ private:
    // int NetworkIn[NUMROBOTS] = {};
 
    /** Cheap conversion between arbitrary node IDs and integral representation */
-   std::string m_id_to_key[NUMROBOTS];
+   UInt16 m_id_to_key[NUMROBOTS];
 
    /** The adjacency hash of the graph */
    std::unordered_map<ak, UInt16> m_adjacency_hash;

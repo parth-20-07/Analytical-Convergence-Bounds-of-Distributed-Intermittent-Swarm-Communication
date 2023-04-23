@@ -1,8 +1,7 @@
 #include "intermittent_model.h"
 #include "buzz/buzzvm.h"
 #include <argos3/core/utility/logging/argos_log.h>
-#include <chrono>
-#include <thread>
+// #include <argos3/core/utility/datatypes/datatypes.h>
 
 /****************************************/
 /****************************************/
@@ -44,7 +43,7 @@ struct PutFlow : public CBuzzLoopFunctions::COperation
 
       BuzzTableOpen(t_vm, "flow");
 
-      for(int i = 0; i < NUMROBOTS; ++i) {
+      for(UInt16 i = 0; i < NUMROBOTS; i++) {
          
          // buzzvm_pushs(t_vm, buzzvm_string_register(t_vm, str_robot_id.c_str(), 0));
          // buzzvm_pushi(t_vm, static_cast<int>(m_vecFlow[i]));
@@ -153,9 +152,6 @@ void CIntermittentModel::PostStep()
 {
 
    printf("starting poststep\n");
-   
-   std::chrono::seconds dura(0.5);
-   std::this_thread::sleep_for( dura );
 
    resetLists();
    auto cMedium = GetSimulator().GetMedium<CRABMedium>("rab");
@@ -163,25 +159,24 @@ void CIntermittentModel::PostStep()
    UInt16 i = 0, j = 0;
    for (auto it = mapRABs.begin(); it != mapRABs.end(); ++it, ++i)
    {
-      auto cRAB = *any_cast<CRABEquippedEntity *>(it->second);
+      CRABEquippedEntity cRAB = *any_cast<CRABEquippedEntity *>(it->second);
       auto setNbrs = cMedium.GetRABsCommunicatingWith(cRAB);
-      m_id_to_key[i] = cRAB.GetId();
+      m_id_to_key[i] = cRAB.GetIndex();
+
+
       j = 0;
 
-      printf("populate adjaceny hash\n");
-      print(i);
-      printf("\n");
-      std::this_thread::sleep_for( dura );
+      printf("populate adjaceny hash (%u) for %u\n", (unsigned int)i, cRAB.GetIndex());
+      // printf(i);
       for (auto jt = setNbrs.begin(); jt != setNbrs.end(); ++jt, ++j)
       {
-         m_adjacency_hash[make_tuple(cRAB.GetId(), jt.m_psElem->Data->GetId())] = 1;
+         m_adjacency_hash[std::make_tuple((UInt16)cRAB.GetIndex(), (UInt16)jt.m_psElem->Data->GetIndex())] = 1;
          m_next[i][j].push_back(-1);
       }
    }
 
 
    printf("starting floyd warshall\n");
-   std::this_thread::sleep_for( dura );
    // Collect all the shortest paths
    FloydWarshall();
 
@@ -190,25 +185,37 @@ void CIntermittentModel::PostStep()
    {
       for (j = 0; j < NUMROBOTS; ++j)
       {
-         auto all_paths = GetPath(i, j);
+         printf("getting all paths for %u, %u\n",m_id_to_key[i], m_id_to_key[j]);
+
+         std::vector<std::vector<UInt16>> all_paths = GetPath(i, j);
+
+         for(std::vector<UInt16> path : all_paths){
+            printf("path: ");
+            for (UInt16 node_index : path)
+               printf(" %u, ", (unsigned int)node_index);
+            printf("\n");
+         }
+
          all_all_paths.insert(all_all_paths.end(), all_paths.begin(), all_paths.end());
       }
    }
    std::fill(m_vecFlow.begin(), m_vecFlow.end(), 0);
-   // Now we can brute force through everything and find the number 
-   // of shortest paths that pass through each node
-   for (auto path : all_all_paths)
-      for (auto node : path)
-         m_vecFlow[node]++;
+   // // Now we can brute force through everything and find the number 
+   // // of shortest paths that pass through each node
+   // for (auto path : all_all_paths)
+      
+      // for (auto node : path)
 
+         // m_vecFlow[(unsigned int) node]++;
+// 
    printf("found flow\n");
-   std::this_thread::sleep_for( dura );
-   // LOG << " to update ";
-   // BuzzBytecodeUpdated();
+   // std::this_thread::sleep_for( dura );
+   // // LOG << " to update ";
+   // // BuzzBytecodeUpdated();
 
-   printf("put for each\n");
-   std::this_thread::sleep_for( dura );
-   BuzzForeachVM(PutFlow(m_vecFlow, m_id_to_key));
+   // printf("put for each\n");
+   // printf('\n');
+   // BuzzForeachVM(PutFlow(m_vecFlow, m_id_to_key));
 
 }
 
@@ -228,9 +235,9 @@ void CIntermittentModel::FloydWarshall()
          // picked source
          for (j = 0; j < NUMROBOTS; j++)
          {
-            auto ij = make_tuple(m_id_to_key[i], m_id_to_key[j]);
-            auto ik = make_tuple(m_id_to_key[i], m_id_to_key[k]);
-            auto kj = make_tuple(m_id_to_key[k], m_id_to_key[j]);
+            auto ij = std::make_tuple(m_id_to_key[i], m_id_to_key[j]);
+            auto ik = std::make_tuple(m_id_to_key[i], m_id_to_key[k]);
+            auto kj = std::make_tuple(m_id_to_key[k], m_id_to_key[j]);
             if (m_adjacency_hash.find(ij) != m_adjacency_hash.end() &&
                 m_adjacency_hash.find(ik) != m_adjacency_hash.end() &&
                 m_adjacency_hash.find(kj) != m_adjacency_hash.end())

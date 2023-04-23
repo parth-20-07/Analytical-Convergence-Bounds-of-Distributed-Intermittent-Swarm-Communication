@@ -17,10 +17,6 @@ buzz/buzzvm.h
 /home/akshay/Documents/Swarm/Swarm_IntermittentProj/buzz/buzzvm.h
 argos3/core/utility/logging/argos_log.h
 -
-chrono
--
-thread
--
 
 /home/akshay/Documents/Swarm/Swarm_IntermittentProj/intermittent_model.h
 string.h
