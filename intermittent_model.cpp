@@ -31,34 +31,35 @@ struct PutFlow : public CBuzzLoopFunctions::COperation
 {
 
    /** Constructor */
-   PutFlow(const std::vector<Real> &vec_flow, std::string* m_id_to_key) : m_vecFlow(vec_flow) {
+   PutFlow(float* vec_flow, UInt16* m_id_to_key){
       _m_id_to_key = m_id_to_key;
+      _vecFlow = vec_flow;
    }
 
    /** The action happens here */
    virtual void operator()(const std::string &str_robot_id, buzzvm_t t_vm) {
       // std::string str_var = "flow";
 
-      // printf("testingprintf\n");
+      printf("%s, %u \n", str_robot_id.c_str(), t_vm->getIndex());
 
       BuzzTableOpen(t_vm, "flow");
-
+      
       for(UInt16 i = 0; i < NUMROBOTS; i++) {
          
          // buzzvm_pushs(t_vm, buzzvm_string_register(t_vm, str_robot_id.c_str(), 0));
          // buzzvm_pushi(t_vm, static_cast<int>(m_vecFlow[i]));
          // buzzvm_gstore(t_vm);
 
-         if(_m_id_to_key[i] == str_robot_id){
-            BuzzTablePut(t_vm, 0, static_cast<float>(m_vecFlow[i]));
-            // buzzvm_pushs(t_vm, buzzvm_string_register(t_vm, str_var.c_str(), 0));
-            // buzzvm_pushi(t_vm, static_cast<in   t>(m_vecFlow[i]));
-            // buzzvm_gstore(t_vm);   
-            LOG << " " << _m_id_to_key[i].c_str() << " " << std::endl
-                << str_robot_id.c_str() << std::endl;
+         // if(_m_id_to_key[i] == str_robot_id){
+         //    BuzzTablePut(t_vm, 0, static_cast<float>(_vecFlow[i]));
+         //    // buzzvm_pushs(t_vm, buzzvm_string_register(t_vm, str_var.c_str(), 0));
+         //    // buzzvm_pushi(t_vm, static_cast<in   t>(m_vecFlow[i]));
+         //    // buzzvm_gstore(t_vm);   
+         //    LOG << " " << _m_id_to_key[i].c_str() << " " << std::endl
+         //        << str_robot_id.c_str() << std::endl;
 
-            printf("put_in_bot\n %d", i);
-         }
+         //    printf("put_in_bot\n %d", i);
+         // }
          // BuzzTablePut(t_vm, i, static_cast<float>(m_vecFlow[i]));
       }
       
@@ -76,8 +77,8 @@ struct PutFlow : public CBuzzLoopFunctions::COperation
    }
 
    /** Calculated flow */
-   const std::vector<Real> &m_vecFlow;
-   std::string* _m_id_to_key;
+   float* _vecFlow;
+   UInt16* _m_id_to_key;
 };
 
 /****************************************/
@@ -90,7 +91,7 @@ void CIntermittentModel::Init(TConfigurationNode &t_tree)
    printf("init\n");
 
    CBuzzLoopFunctions::Init(t_tree);
-   m_vecFlow.resize(NUMROBOTS);
+   // m_vecFlow.resize(NUMROBOTS);
 
    m_pcRNG = CRandom::CreateRNG("argos");
 }
@@ -118,7 +119,8 @@ void CIntermittentModel::Destroy()
 void CIntermittentModel::resetLists(){
 
    //reset the flow associated
-   m_vecFlow = std::vector<Real>();
+   // m_vecFlow = std::vector<Real>();
+
 
    //reset the adjacency hash
    m_adjacency_hash = std::unordered_map<ak, UInt16>();
@@ -126,6 +128,7 @@ void CIntermittentModel::resetLists(){
 
    //reset all backpointers
    for(int i = 0; i < NUMROBOTS; i++){
+      m_vecFlow[i] = 0;
       for(int j = 0; j < NUMROBOTS; j++){
          m_next[i][j] = std::vector<int16_t>();
       }
@@ -185,28 +188,29 @@ void CIntermittentModel::PostStep()
    {
       for (j = 0; j < NUMROBOTS; ++j)
       {
-         printf("getting all paths for %u, %u\n",m_id_to_key[i], m_id_to_key[j]);
+         // printf("getting all paths for %u, %u\n",m_id_to_key[i], m_id_to_key[j]);
 
          std::vector<std::vector<UInt16>> all_paths = GetPath(i, j);
 
-         for(std::vector<UInt16> path : all_paths){
-            printf("path: ");
-            for (UInt16 node_index : path)
-               printf(" %u, ", (unsigned int)node_index);
-            printf("\n");
-         }
+         // for(std::vector<UInt16> path : all_paths){
+         //    printf("path: ");
+         //    for (UInt16 node_index : path)
+         //       printf(" %u", (unsigned int)node_index);
+         //    printf("\n");
+         // }
 
          all_all_paths.insert(all_all_paths.end(), all_paths.begin(), all_paths.end());
       }
    }
-   std::fill(m_vecFlow.begin(), m_vecFlow.end(), 0);
+   // std::fill(m_vecFlow.begin(), m_vecFlow.end(), 0);
    // // Now we can brute force through everything and find the number 
    // // of shortest paths that pass through each node
-   // for (auto path : all_all_paths)
+   for (auto path : all_all_paths)
       
-      // for (auto node : path)
-
-         // m_vecFlow[(unsigned int) node]++;
+      for (UInt16 node : path){
+         // printf(" %u, %f \n",   (unsigned int)node, m_vecFlow[(unsigned int) node]);
+         m_vecFlow[(unsigned int) node] = m_vecFlow[(unsigned int) node] + 1.0;
+      }
 // 
    printf("found flow\n");
    // std::this_thread::sleep_for( dura );
@@ -215,7 +219,7 @@ void CIntermittentModel::PostStep()
 
    // printf("put for each\n");
    // printf('\n');
-   // BuzzForeachVM(PutFlow(m_vecFlow, m_id_to_key));
+   BuzzForeachVM(PutFlow(m_vecFlow, m_id_to_key));
 
 }
 

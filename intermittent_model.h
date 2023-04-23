@@ -86,12 +86,12 @@ private:
    typedef std::tuple<ssize_t, ssize_t> ak;
 
    /** The flow associated to the nodes */
-   std::vector<Real> m_vecFlow;
+   float* m_vecFlow = new float[NUMROBOTS];
 
    // int NetworkIn[NUMROBOTS] = {};
 
    /** Cheap conversion between arbitrary node IDs and integral representation */
-   UInt16 m_id_to_key[NUMROBOTS];
+   UInt16 *m_id_to_key = new UInt16[NUMROBOTS];
 
    /** The adjacency hash of the graph */
    std::unordered_map<ak, UInt16> m_adjacency_hash;
