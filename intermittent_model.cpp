@@ -27,59 +27,59 @@ struct GetRobotData : public CBuzzLoopFunctions::COperation
 /**
  * Functor to put the flow in the Buzz VMs.
  */
-struct PutFlow : public CBuzzLoopFunctions::COperation
-{
+// struct PutFlow : public CBuzzLoopFunctions::COperation
+// {
 
-   /** Constructor */
-   PutFlow(float* vec_flow, UInt16* m_id_to_key){
-      _m_id_to_key = m_id_to_key;
-      _vecFlow = vec_flow;
-   }
+//    /** Constructor */
+//    PutFlow(float* vec_flow, UInt16* m_id_to_key){
+//       _m_id_to_key = m_id_to_key;
+//       _vecFlow = vec_flow;
+//    }
 
-   /** The action happens here */
-   virtual void operator()(const std::string &str_robot_id, buzzvm_t t_vm) {
-      // std::string str_var = "flow";
+//    /** The action happens here */
+//    virtual void operator()(const std::string &str_robot_id, buzzvm_t t_vm) {
+//       // std::string str_var = "flow";
 
-      printf("%s, %u \n", str_robot_id.c_str(), t_vm->getIndex());
+//       printf("%s, %u \n", str_robot_id.c_str(), t_vm->getIndex());
 
-      BuzzTableOpen(t_vm, "flow");
+//       BuzzTableOpen(t_vm, "flow");
       
-      for(UInt16 i = 0; i < NUMROBOTS; i++) {
+//       for(UInt16 i = 0; i < NUMROBOTS; i++) {
          
-         // buzzvm_pushs(t_vm, buzzvm_string_register(t_vm, str_robot_id.c_str(), 0));
-         // buzzvm_pushi(t_vm, static_cast<int>(m_vecFlow[i]));
-         // buzzvm_gstore(t_vm);
+//          // buzzvm_pushs(t_vm, buzzvm_string_register(t_vm, str_robot_id.c_str(), 0));
+//          // buzzvm_pushi(t_vm, static_cast<int>(m_vecFlow[i]));
+//          // buzzvm_gstore(t_vm);
 
-         // if(_m_id_to_key[i] == str_robot_id){
-         //    BuzzTablePut(t_vm, 0, static_cast<float>(_vecFlow[i]));
-         //    // buzzvm_pushs(t_vm, buzzvm_string_register(t_vm, str_var.c_str(), 0));
-         //    // buzzvm_pushi(t_vm, static_cast<in   t>(m_vecFlow[i]));
-         //    // buzzvm_gstore(t_vm);   
-         //    LOG << " " << _m_id_to_key[i].c_str() << " " << std::endl
-         //        << str_robot_id.c_str() << std::endl;
+//          // if(_m_id_to_key[i] == str_robot_id){
+//          //    BuzzTablePut(t_vm, 0, static_cast<float>(_vecFlow[i]));
+//          //    // buzzvm_pushs(t_vm, buzzvm_string_register(t_vm, str_var.c_str(), 0));
+//          //    // buzzvm_pushi(t_vm, static_cast<in   t>(m_vecFlow[i]));
+//          //    // buzzvm_gstore(t_vm);   
+//          //    LOG << " " << _m_id_to_key[i].c_str() << " " << std::endl
+//          //        << str_robot_id.c_str() << std::endl;
 
-         //    printf("put_in_bot\n %d", i);
-         // }
-         // BuzzTablePut(t_vm, i, static_cast<float>(m_vecFlow[i]));
-      }
+//          //    printf("put_in_bot\n %d", i);
+//          // }
+//          // BuzzTablePut(t_vm, i, static_cast<float>(m_vecFlow[i]));
+//       }
       
 
 
-      /* Set the values of the table 'stimulus' in the Buzz VM */
-      // BuzzTableOpen(t_vm, "stimulus");
-      // for(int i = 0; i < m_vecFlow.size(); ++i) {
-      //    BuzzTablePut(t_vm, i, static_cast<float>(m_vecFlow[i]));
-      // }
-      BuzzTableClose(t_vm);
-      LOG << std::endl;
+//       /* Set the values of the table 'stimulus' in the Buzz VM */
+//       // BuzzTableOpen(t_vm, "stimulus");
+//       // for(int i = 0; i < m_vecFlow.size(); ++i) {
+//       //    BuzzTablePut(t_vm, i, static_cast<float>(m_vecFlow[i]));
+//       // }
+//       BuzzTableClose(t_vm);
+//       LOG << std::endl;
 
 
-   }
+//    }
 
-   /** Calculated flow */
-   float* _vecFlow;
-   UInt16* _m_id_to_key;
-};
+//    /** Calculated flow */
+//    float* _vecFlow;
+//    UInt16* _m_id_to_key;
+// };
 
 /****************************************/
 /****************************************/
@@ -157,19 +157,22 @@ void CIntermittentModel::PostStep()
    printf("starting poststep\n");
 
    resetLists();
-   auto cMedium = GetSimulator().GetMedium<CRABMedium>("rab");
+   CRABMedium& cMedium = GetSimulator().GetMedium<CRABMedium>("rab");
    auto mapRABs = GetSpace().GetEntitiesByType("rab");
    UInt16 i = 0, j = 0;
    for (auto it = mapRABs.begin(); it != mapRABs.end(); ++it, ++i)
    {
       CRABEquippedEntity cRAB = *any_cast<CRABEquippedEntity *>(it->second);
       auto setNbrs = cMedium.GetRABsCommunicatingWith(cRAB);
-      m_id_to_key[i] = cRAB.GetIndex();
-
+      std::string nameOfRoot = cRAB.GetRootEntity().GetId();
+      buzzvm_t vm_ref_key= BuzzGetVM(nameOfRoot);
+      m_id_to_key[i] = vm_ref_key;
+      m_id_to_index[i] = cRAB.GetIndex();
+      
 
       j = 0;
 
-      printf("populate adjaceny hash (%u) for %u\n", (unsigned int)i, cRAB.GetIndex());
+      // printf("populate adjaceny hash (%u) for %u\n", (unsigned int)i, cRAB.GetIndex());
       // printf(i);
       for (auto jt = setNbrs.begin(); jt != setNbrs.end(); ++jt, ++j)
       {
@@ -219,8 +222,14 @@ void CIntermittentModel::PostStep()
 
    // printf("put for each\n");
    // printf('\n');
-   BuzzForeachVM(PutFlow(m_vecFlow, m_id_to_key));
+   // BuzzForeachVM(PutFlow(m_vecFlow, m_id_to_key));
+   
+   for (int k = 0; k < NUMROBOTS; k++)
+   {
+      printf("here %u \n", k);
 
+      BuzzPut(m_id_to_key[k], "flow", m_vecFlow[k]);
+   }
 }
 
 /****************************************/
@@ -239,9 +248,9 @@ void CIntermittentModel::FloydWarshall()
          // picked source
          for (j = 0; j < NUMROBOTS; j++)
          {
-            auto ij = std::make_tuple(m_id_to_key[i], m_id_to_key[j]);
-            auto ik = std::make_tuple(m_id_to_key[i], m_id_to_key[k]);
-            auto kj = std::make_tuple(m_id_to_key[k], m_id_to_key[j]);
+            auto ij = std::make_tuple(m_id_to_index[i], m_id_to_index[j]);
+            auto ik = std::make_tuple(m_id_to_index[i], m_id_to_index[k]);
+            auto kj = std::make_tuple(m_id_to_index[k], m_id_to_index[j]);
             if (m_adjacency_hash.find(ij) != m_adjacency_hash.end() &&
                 m_adjacency_hash.find(ik) != m_adjacency_hash.end() &&
                 m_adjacency_hash.find(kj) != m_adjacency_hash.end())

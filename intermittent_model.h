@@ -91,7 +91,8 @@ private:
    // int NetworkIn[NUMROBOTS] = {};
 
    /** Cheap conversion between arbitrary node IDs and integral representation */
-   UInt16 *m_id_to_key = new UInt16[NUMROBOTS];
+   buzzvm_t* m_id_to_key = new buzzvm_t[NUMROBOTS];
+   ssize_t *m_id_to_index = new ssize_t[NUMROBOTS];
 
    /** The adjacency hash of the graph */
    std::unordered_map<ak, UInt16> m_adjacency_hash;
