@@ -1,25 +1,7 @@
 ############################################ Variables ############################################
-taskID = 0
-networkToReach = -1
-networkID = -1
-curiosity = 0.0
-stepsSinceStart = 0
-utility = 1.0
-a = 1.0
-ao = 1.0
 
-b = 0.01
-curiosity_increase = 1
-#bo = 1
-#flow = 1.0
-connectability = 1.0
-centerX = 0
-centerY = 0
+###
 
-waypointX = 0
-waypointY = 0
-
-phi = 0
 ############################################ Variables ############################################
 
 ############################################ Main Methods ############################################
@@ -32,11 +14,13 @@ networkID = -1
 curiosity = 0.0
 stepsSinceStart = 0
 utility = 1.0
-a = 1.0
+a = 2.0
 ao = 1.0
 
-b = 1
-curiosity_increase = 0.1
+b = 1.0
+curiosity_increase = 0.001
+
+c0 = 0
 #bo = 1
 #flow = 1.0
 connectability = 1.0
@@ -52,29 +36,11 @@ phi = 0
 		networkID = 1
 	}
 
-	neighbors.listen("network",
-   function(vid, value, rid) {
-      networkID = value
-			if(networkID == networkToReach){
-				if(task == 1){
-					task = 0
-					networkToReach = value
-					resetCuriosity()
-				}
-			}
-			neighborBroadcast()
-   }
-	)
-
-	neighbors.listen("curiosityReset",
-   function(vid, value, rid) {
-      	resetCuriosity()
-   }
-	)
 	
 }
 
 function step() {
+	listen()
 	if(stepsSinceStart > 10){
 		isLeader = ((id == 0))
 		setNetworkOrigin()
@@ -149,11 +115,33 @@ function Task0(){
 		waypointX = radius * math.cos(theta1) + centerX
 		waypointY = radius * math.sin(theta1) + centerY
 
-		log("flow -- ", flow, "; id --", id)
+		#log("flow -- ", flow, "; id --", id)
 }
 
 # Call this function when you want to move to a particular point (x,y)
 
+function listen(){
+
+	neighbors.listen("network",
+   function(vid, value, rid) {
+      networkID = value
+			if(networkID == networkToReach){
+				if(task == 1){
+					task = 0
+					networkToReach = value
+					resetCuriosity()
+				}
+			}
+			neighborBroadcast()
+   }
+	)
+
+	neighbors.listen("curiosityReset",
+   function(vid, value, rid) {
+      	resetCuriosity()
+   }
+	)
+}
 
 function updateNetwork(){
 	#nothing yet
@@ -180,10 +168,11 @@ function updateVariables(){
 		curiosity = curiosity + curiosity_increase;
 		connectability = 0
 		if(networkID == 1){
-			connectability = 1/calculateDistanceFromPoint(-2.5, -2.5)#distance between current position and goto
+			connectability = 10 - calculateDistanceFromPoint(-2.5, -2.5)#distance between current position and goto
 		}else{
-			connectability = 1/calculateDistanceFromPoint(2.5, 2.5)#distance between current position and goto
+			connectability = 10 - calculateDistanceFromPoint(2.5, 2.5)#distance between current position and goto
 		}
+		#log("connectability", connectability)
 		#check for if it is becoming a data mule. If it is, send a packet to inform the network.
 		evaluatePhi()
 		if(phi < 0.0){
@@ -202,6 +191,7 @@ function updateVariables(){
 }
 
 function resetCuriosity(){
+		log("curiosity reset for -- ", id)
 	curiosity = 0
 	neighbors.broadcast("curiosityReset", 1)
 }
@@ -212,7 +202,8 @@ function neighborBroadcast(){
 
 function evaluatePhi(){
 	#flow_p = flow * 1.0
-	phi =  ((a * 1 + ao) - (b*(curiosity * connectability)))
-	log("phi ", phi, "; phi_conn = ", b*(curiosity * connectability), "; phi_a = ", (a * 1 + ao))
+
+	phi =  ((a * 1 + ao) - (b* (curiosity * (connectability) ) ))
+	#log("phi ", phi, "; phi_conn = ", b*(curiosity * (connectability)), "; phi_a = ", (a * 1 + ao))
 }
 ############################################ Supporting Methods ############################################
