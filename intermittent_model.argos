@@ -101,7 +101,7 @@ footbot_wheels [default]
 
   </controllers>
 
-  <!-- <loop_functions label="intermittent_model" library="build/libintermittent_model.so" /> -->
+  <loop_functions label="intermittent_model" library="build/libintermittent_model.so" />
 
   <!-- *********************** -->
   <!-- * Arena configuration * -->

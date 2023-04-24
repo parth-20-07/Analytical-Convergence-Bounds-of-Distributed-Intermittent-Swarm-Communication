@@ -11,6 +11,8 @@
 
 #define NUMROBOTS 30
 #define INF 9999
+#define PERIODOF 3
+
 
 class CIntermittentModel : public CBuzzLoopFunctions
 {
@@ -108,6 +110,8 @@ private:
 
    /** Random number generator */
    CRandom::CRNG *m_pcRNG;
+
+   int stepssince = 0;
 };
 
 #endif

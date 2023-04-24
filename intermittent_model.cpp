@@ -153,80 +153,59 @@ void CIntermittentModel::resetLists(){
 
 void CIntermittentModel::PostStep()
 {
-
-   printf("starting poststep\n");
-
-   resetLists();
-   CRABMedium& cMedium = GetSimulator().GetMedium<CRABMedium>("rab");
-   auto mapRABs = GetSpace().GetEntitiesByType("rab");
-   UInt16 i = 0, j = 0;
-   for (auto it = mapRABs.begin(); it != mapRABs.end(); ++it, ++i)
-   {
-      CRABEquippedEntity cRAB = *any_cast<CRABEquippedEntity *>(it->second);
-      auto setNbrs = cMedium.GetRABsCommunicatingWith(cRAB);
-      std::string nameOfRoot = cRAB.GetRootEntity().GetId();
-      buzzvm_t vm_ref_key= BuzzGetVM(nameOfRoot);
-      m_id_to_key[i] = vm_ref_key;
-      m_id_to_index[i] = cRAB.GetIndex();
-      
-
-      j = 0;
-
-      // printf("populate adjaceny hash (%u) for %u\n", (unsigned int)i, cRAB.GetIndex());
-      // printf(i);
-      for (auto jt = setNbrs.begin(); jt != setNbrs.end(); ++jt, ++j)
+   if(stepssince == 0){
+      resetLists();
+      CRABMedium& cMedium = GetSimulator().GetMedium<CRABMedium>("rab");
+      auto mapRABs = GetSpace().GetEntitiesByType("rab");
+      UInt16 i = 0, j = 0;
+      for (auto it = mapRABs.begin(); it != mapRABs.end(); ++it, ++i)
       {
-         m_adjacency_hash[std::make_tuple((UInt16)cRAB.GetIndex(), (UInt16)jt.m_psElem->Data->GetIndex())] = 1;
-         m_next[i][j].push_back(-1);
+         CRABEquippedEntity cRAB = *any_cast<CRABEquippedEntity *>(it->second);
+         auto setNbrs = cMedium.GetRABsCommunicatingWith(cRAB);
+         std::string nameOfRoot = cRAB.GetRootEntity().GetId();
+         buzzvm_t vm_ref_key= BuzzGetVM(nameOfRoot);
+         m_id_to_key[i] = vm_ref_key;
+         m_id_to_index[i] = cRAB.GetIndex();
+         
+         j = 0;
+
+         for (auto jt = setNbrs.begin(); jt != setNbrs.end(); ++jt, ++j)
+         {
+            m_adjacency_hash[std::make_tuple((UInt16)cRAB.GetIndex(), (UInt16)jt.m_psElem->Data->GetIndex())] = 1;
+            m_next[i][j].push_back(-1);
+         }
       }
-   }
 
 
-   printf("starting floyd warshall\n");
-   // Collect all the shortest paths
-   FloydWarshall();
+      // Collect all the shortest paths
+      FloydWarshall();
 
-   std::vector<std::vector<UInt16>> all_all_paths = {};
-   for (i = 0; i < NUMROBOTS; ++i)
-   {
-      for (j = 0; j < NUMROBOTS; ++j)
+      std::vector<std::vector<UInt16>> all_all_paths = {};
+      for (i = 0; i < NUMROBOTS; ++i)
       {
-         // printf("getting all paths for %u, %u\n",m_id_to_key[i], m_id_to_key[j]);
+         for (j = 0; j < NUMROBOTS; ++j)
+         {
+            std::vector<std::vector<UInt16>> all_paths = GetPath(i, j);
 
-         std::vector<std::vector<UInt16>> all_paths = GetPath(i, j);
-
-         // for(std::vector<UInt16> path : all_paths){
-         //    printf("path: ");
-         //    for (UInt16 node_index : path)
-         //       printf(" %u", (unsigned int)node_index);
-         //    printf("\n");
-         // }
-
-         all_all_paths.insert(all_all_paths.end(), all_paths.begin(), all_paths.end());
+            all_all_paths.insert(all_all_paths.end(), all_paths.begin(), all_paths.end());
+         }
       }
-   }
-   // std::fill(m_vecFlow.begin(), m_vecFlow.end(), 0);
-   // // Now we can brute force through everything and find the number 
-   // // of shortest paths that pass through each node
-   for (auto path : all_all_paths)
-      
-      for (UInt16 node : path){
-         // printf(" %u, %f \n",   (unsigned int)node, m_vecFlow[(unsigned int) node]);
-         m_vecFlow[(unsigned int) node] = m_vecFlow[(unsigned int) node] + 1.0;
-      }
-// 
-   printf("found flow\n");
-   // std::this_thread::sleep_for( dura );
-   // // LOG << " to update ";
-   // // BuzzBytecodeUpdated();
-
-   // printf("put for each\n");
-   // printf('\n');
-   // BuzzForeachVM(PutFlow(m_vecFlow, m_id_to_key));
+      // // Now we can brute force through everything and find the number 
+      // // of shortest paths that pass through each node
+      for (auto path : all_all_paths)
+         
+         for (UInt16 node : path){
+            printf(" %u, %f \n",   (unsigned int)node, m_vecFlow[(unsigned int) node]);
+            m_vecFlow[(unsigned int) node] = m_vecFlow[(unsigned int) node] + 1.0;
+         }
+   //  
+   }  
+   stepssince = (stepssince + 1) % PERIODOF;
    
    for (int k = 0; k < NUMROBOTS; k++)
    {
       printf("here %u \n", k);
+      printf("flow %u \n", m_vecFlow[k]);
 
       BuzzPut(m_id_to_key[k], "flow", m_vecFlow[k]);
    }

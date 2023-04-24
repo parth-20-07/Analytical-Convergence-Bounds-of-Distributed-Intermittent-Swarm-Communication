@@ -6,7 +6,6 @@
 
 #IncludeRegexTransform: 
 
-<<<<<<< HEAD
 /home/akshay/Documents/Swarm/Swarm_IntermittentProj/hash_combine.h
 tuple
 -
@@ -34,7 +33,4 @@ argos3/core/utility/math/rng.h
 -
 argos3/plugins/simulator/media/rab_medium.h
 -
-=======
-/home/parth/Desktop/Swarm_IntermittentProj/build/intermittent_model_autogen/mocs_compilation.cpp
->>>>>>> origin/taskAllocation
 

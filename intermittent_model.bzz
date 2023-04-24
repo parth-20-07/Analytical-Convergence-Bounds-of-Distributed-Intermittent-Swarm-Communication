@@ -8,17 +8,21 @@ utility = 1.0
 a = 1.0
 b = 1.0
 #flow = 1.0
-connectability = 0.1
+connectability = 1.0
 centerX = 0
 centerY = 0
+
+waypointX = 0
+waypointY = 0
+
 ############################################ Variables ############################################
 
 ############################################ Main Methods ############################################
 function init() {
 	math.rng.setseed(id)
 	taskID = 0
-	networkToReach = -1
-	networkID = -1
+	networkToReach = 0
+	networkID = 0
 	curiosity = 0.0
 	stepsSinceStart = 0
 	utility = 1.0
@@ -26,24 +30,31 @@ function init() {
 	b = 1.0
 	#flow = 1.0
 	connectability = 0.1
-	if((id == 0)){
-		networkID = 0
-		networkToReach = 0
-	}
-	if((id == 1)){
-		networkID = 1
+	#if((id == 0)){
+	#	isLeader = 1
+	#}
+	if(pose.position.x > 0){
 		networkToReach = 1
-	}	
+		networkID = 1
+	}
+	
+	
 }
 
 function step() {
-	isLeader = ((id == 0) or (id == 10))
-	if( isLeader or (taskID == 1)){
-		goToNetworkOrigin(networkToReach)
-	}else{
-		Task0()
+	if(stepsSinceStart > 10){
+		isLeader = ((id == 0))
+		setNetworkOrigin()
+		if( isLeader or (taskID == 1)){
+			#update waypoint based off of task 1
+			gotoNetworkOrigin()
+		}else{
+			#update waypoint based off of task 0
+			Task0()
+		}
+		moveTowardsPoint(waypointX, waypointY)
+		updateNetwork()
 	}
-
 	updateVariables()
 }
 
@@ -57,41 +68,56 @@ function destroy() {
 
 ############################################ Call Methods ############################################
 # Call this function to determine the centroid of the network
-function goToNetworkOrigin( networkIndex ){
-	if(networkIndex == 1){
-		centerX = 2
-		centerY = 2
+function setNetworkOrigin(){
+	if(networkToReach == 1){
+		centerX = 2.5
+		centerY = 2.5
 	}
 	else{
-		centerX = -2
-		centerY = -2
+		centerX = -2.5
+		centerY = -2.5
 	}
+}
+
+function moveTowardsPoint(){	
+	offsetx = (waypointX - pose.position.x) 
+	offsety = (waypointY - pose.position.y)
+	
+	#desired yaw
+	desiredAngle = math.atan(offsety,offsetx)
+	
+	offsetYaw = desiredAngle - pose.orientation.yaw;
+	
+	leftWheelTurn = -10 * offsetYaw;
+	rightWheelTurn = 10*offsetYaw;
+	linear = 10 * math.cos(offsetYaw)
+
+	set_wheels(leftWheelTurn + linear, rightWheelTurn + linear)
+	
+}
+
+function gotoNetworkOrigin(){
+	waypointX = centerX
+	waypointY = centerY
 }
 
 # Call this function when you want to perform Task 0
 function Task0(){
-	rotationRadius = 1.0
-	if(calculateDistanceFromPoint(centerX,centerY)>= rotationRadius){
-		if(orientTowardsPoint(centerX,centerY) == 1){
-			moveTowardsPoint()
-		}
-		return
-	}
-	else{
-		rotateAroundCentroid()
-	}
+		radius = 0.8
+		theta = ((id/15.0 + stepsSinceStart/1000.0) * 6.28) % 6.28
+		
+		waypointX = radius * math.cos(theta) + centerX
+		waypointY = radius * math.sin(theta) + centerY
+
+		log("flow -- ", flow, "; id --", id)
 }
 
 # Call this function when you want to move to a particular point (x,y)
-function travelToPoint(pointX, pointY){
-	errorRadius = 0.2
-	if(calculateDistanceFromPoint(centerX,centerY)>= errorRadius){
-		if(orientTowardsPoint(centerX,centerY) == 1){
-			moveTowardsPoint()
-		}
-	}
-}
 
+
+function updateNetwork(){
+	#nothing yet
+}
 ############################################ Call Methods ############################################
 
 
@@ -110,66 +136,26 @@ function calculateDistanceFromPoint(pointX, pointY){
 function updateVariables(){
 	stepsSinceStart = stepsSinceStart + 1
 
-	if(taskID == 0){
-		curiosity = curiosity + 1.0;
+	#if(taskID == 0){
+	#	curiosity = curiosity + 1.0;
 		#connectability = math.sqrt()#distance between current position and goto
 		#check for if it is becoming a data mule. If it is, send a packet to inform the network.
-		if(evaluatePhi() < 0.0){
-			if(networkToReach == 0){
-				networkToReach = 1
-			}else{
-				networkToReach = 0
-			}
+	#	if(evaluatePhi() < 0.0){
+	#		if(networkToReach == 0){
+	#			networkToReach = 1
+	#		}else{
+	#			networkToReach = 0
+	#		}
 			#networkToReach = !networkID
-			taskID = 1
+	#		taskID = 1
 			#broadcast to neighbors, "reset curiosoty"
-		}
-	}
+	#	}
+	#}
 	#else{
 		#if a neighbor exists, if it is of unique network ID, change task and broadcast packets as needed. Adopt neighbors network ID.
 		#possibility for "handshake" task swapping
 		
 	#}
-}
-
-function orientTowardsPoint(pointX, pointY){
-	rotationSpeed = 2.5
-	yaw = pose.orientation.yaw
-
-	posX = pose.position.x
-	posY = pose.position.y
-
-	dX = pointX - posX
-	dY = pointY - posY
-
-	theta = math.atan(dY, dX)
-	yawError = 0.1
-	# Orienting towards centroid
-	if (theta > yaw+yawError)
-		{
-			set_wheels(-rotationSpeed,rotationSpeed)
-			log(id, "D: ", distance, " Orienting towards centroid")
-			return 0
-		}
-	else if (theta < yaw-yawError)
-		{
-			set_wheels(rotationSpeed,-rotationSpeed)
-			log(id, "D: ", distance, " Orienting towards centroid")
-			return 0
-		}
-	log(id, "D: ", distance, " Robot Already Oriented")
-	return 1
-}
-
-function moveTowardsPoint(){
-	log(id, "D: ", distance, " Moving towards Point")
-	movementSpeed = 10.0
-	set_wheels(movementSpeed,movementSpeed)
-}
-
-function rotateAroundCentroid(){
-	gotop(10.0,0.0)
-	log(id, "Revolving Around centroid")
 }
 
 function evaluatePhi(){
