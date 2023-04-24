@@ -1,86 +1,110 @@
-	
-	taskID = 0
+############################################ Variables ############################################
+taskID = 0
+networkToReach = -1
+networkID = -1
+curiosity = 0.0
+stepsSinceStart = 0
+utility = 1.0
+a = 1.0
+b = 1.0
+#flow = 1.0
+connectability = 0.1
+centerX = 0
+centerY = 0
+############################################ Variables ############################################
 
-	networkToReach = -1
-
-	networkID = -1
-	
-	curiosity = 0.0
-
-	stepsSinceStart = 0
-
-	utility = 1.0
-
-	a = 1.0
-	b = 1.0
-	
-	#flow = 1.0
-	connectability = 0.1
-
-
+############################################ Main Methods ############################################
 function init() {
 	math.rng.setseed(id)
-
-	#gotoNetworkOrigins[0][0] = -2;
-	#gotoNetworkOrigins[0][1] = -2;
-
-	#gotoNetworkOrigins[1][0] = 2;
-	#gotoNetworkOrigins[1][1] = 2;
-
 	taskID = 0
-
 	networkToReach = -1
-
 	networkID = -1
-	
 	curiosity = 0.0
-
 	stepsSinceStart = 0
-
 	utility = 1.0
-
 	a = 1.0
 	b = 1.0
-	
 	#flow = 1.0
 	connectability = 0.1
-
 	if((id == 0)){
 		networkID = 0
 		networkToReach = 0
 	}
-
 	if((id == 1)){
 		networkID = 1
 		networkToReach = 1
 	}	
 }
 
-
-
-function Task0(){
-	#carry out task 0 
-}
-
-function goToNetworkOrigin( networkIndex ){
-
-	goToPointx = -2
-	goToPointy = -2 	
-	
-	if(networkIndex == 1){
-		goToPointx = 2
-		goToPointy = 2 		
+function step() {
+	isLeader = ((id == 0) or (id == 10))
+	if( isLeader or (taskID == 1)){
+		goToNetworkOrigin(networkToReach)
+	}else{
+		Task0()
 	}
-	
-	#gotopointx = gotoNetworkOrigins[networkIndex][0]
-	#gotopointy = gotoNetworkOrigins[networkIndex][1]
-	#
-	
-	
+
+	updateVariables()
 }
 
-function evaluatePhi(){
-	return (a * 1) - (b*(curiosity * connectability))
+
+function reset() {
+}
+
+function destroy() {
+}
+############################################ Main Methods ############################################
+
+############################################ Call Methods ############################################
+# Call this function to determine the centroid of the network
+function goToNetworkOrigin( networkIndex ){
+	if(networkIndex == 1){
+		centerX = 2
+		centerY = 2
+	}
+	else{
+		centerX = -2
+		centerY = -2
+	}
+}
+
+# Call this function when you want to perform Task 0
+function Task0(){
+	rotationRadius = 1.0
+	if(calculateDistanceFromPoint(centerX,centerY)>= rotationRadius){
+		if(orientTowardsPoint(centerX,centerY) == 1){
+			moveTowardsPoint()
+		}
+		return
+	}
+	else{
+		rotateAroundCentroid()
+	}
+}
+
+# Call this function when you want to move to a particular point (x,y)
+function travelToPoint(pointX, pointY){
+	errorRadius = 0.2
+	if(calculateDistanceFromPoint(centerX,centerY)>= errorRadius){
+		if(orientTowardsPoint(centerX,centerY) == 1){
+			moveTowardsPoint()
+		}
+	}
+}
+
+############################################ Call Methods ############################################
+
+
+############################################ Supporting Methods ############################################
+function calculateDistanceFromPoint(pointX, pointY){
+	posX = pose.position.x
+	posY = pose.position.y
+
+	eX = (posX-pointX)^2
+	eY = (posY-pointY)^2
+	distance = math.sqrt(eX + eY)
+
+	return distance
 }
 
 function updateVariables(){
@@ -108,22 +132,47 @@ function updateVariables(){
 	#}
 }
 
-function step() {
-	isLeader = ((id == 0) or (id == 10))
-	if( isLeader or (taskID == 1)){
-		goToNetworkOrigin(networkToReach)
-	}else{
-		Task0()
-	}
+function orientTowardsPoint(pointX, pointY){
+	rotationSpeed = 2.5
+	yaw = pose.orientation.yaw
 
-	updateVariables()
+	posX = pose.position.x
+	posY = pose.position.y
+
+	dX = pointX - posX
+	dY = pointY - posY
+
+	theta = math.atan(dY, dX)
+	yawError = 0.1
+	# Orienting towards centroid
+	if (theta > yaw+yawError)
+		{
+			set_wheels(-rotationSpeed,rotationSpeed)
+			log(id, "D: ", distance, " Orienting towards centroid")
+			return 0
+		}
+	else if (theta < yaw-yawError)
+		{
+			set_wheels(rotationSpeed,-rotationSpeed)
+			log(id, "D: ", distance, " Orienting towards centroid")
+			return 0
+		}
+	log(id, "D: ", distance, " Robot Already Oriented")
+	return 1
 }
 
-
-# This function is executed when you press the reset button
-function reset() {
+function moveTowardsPoint(){
+	log(id, "D: ", distance, " Moving towards Point")
+	movementSpeed = 10.0
+	set_wheels(movementSpeed,movementSpeed)
 }
 
-# This function is executed once when you close the simulator
-function destroy() {
+function rotateAroundCentroid(){
+	gotop(10.0,0.0)
+	log(id, "Revolving Around centroid")
 }
+
+function evaluatePhi(){
+	return (a * 1) - (b*(curiosity * connectability))
+}
+############################################ Supporting Methods ############################################
