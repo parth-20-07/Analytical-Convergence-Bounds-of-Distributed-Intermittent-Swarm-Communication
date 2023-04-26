@@ -19,6 +19,7 @@ a_offset = 0.20
 
 stepsSinceBroadcasted1 = 0
 stepsSinceBroadcasted2 = 0
+expellStepsSince = 0
 b = 1.3
 curiosity_increase = 0.001
 originalNetworkID = 0
@@ -49,7 +50,7 @@ phi = 0
 }
 
 function step() {
-	
+	if(expellStepsSince > 0){expellStep = 0}
 	listen()
 	if(stepsSinceStart > 10){
 		isLeader = ((id == 0))
@@ -186,6 +187,7 @@ function updateVariables(){
 	stepsSinceStart = stepsSinceStart + 1
 	stepsSinceBroadcasted1	= stepsSinceBroadcasted1 + 1
 	stepsSinceBroadcasted2  = stepsSinceBroadcasted2 + 1
+	expellStepsSince = expellStepsSince + 1
 
 	if(taskID == 0){
 		curiosity = curiosity + curiosity_increase;
@@ -219,6 +221,9 @@ function resetCuriosity( isExpulsion ){
 	log("curiosity reset for -- ", id)
 	curiosity = 0
 	expellStep = isExpulsion
+	if(isExpulsion == 1.0){
+		expellStepsSince = 0
+	}
 	neighbors.broadcast("curiosityReset", isExpulsion)
 	if(isExpulsion){}else{
 		log("admit logged ", id)
