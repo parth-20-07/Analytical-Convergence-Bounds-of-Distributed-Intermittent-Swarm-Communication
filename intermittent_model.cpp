@@ -5,82 +5,48 @@
 
 /****************************************/
 /****************************************/
+std::ofstream m_cOutFile;
+
+float* phi_recorded = new float[2];
+int phiRecord = 0;
 
 /**
  * Functor to get data from the robots
  */
-struct GetRobotData : public CBuzzLoopFunctions::COperation
-{
-
-   /** Constructor */
-   GetRobotData() {}
-
-   /** The action happens here */
-   virtual void operator()(const std::string &str_robot_id, buzzvm_t t_vm)
-   {
-   }
-};
-
-/****************************************/
-/****************************************/
 
 /**
- * Functor to put the flow in the Buzz VMs.
+ * Functor to get data from the robots
  */
-// struct PutFlow : public CBuzzLoopFunctions::COperation
-// {
+struct GetRobotData : public CBuzzLoopFunctions::COperation {
 
-//    /** Constructor */
-//    PutFlow(float* vec_flow, UInt16* m_id_to_key){
-//       _m_id_to_key = m_id_to_key;
-//       _vecFlow = vec_flow;
-//    }
+   /** Constructor */
+   GetRobotData(){}
 
-//    /** The action happens here */
-//    virtual void operator()(const std::string &str_robot_id, buzzvm_t t_vm) {
-//       // std::string str_var = "flow";
+   /** The action happens here */
+   virtual void operator()(const std::string& str_robot_id,
+                           buzzvm_t t_vm) {
+         // printf("%s \n", str_robot_id.c_str());
+            
+         buzzobj_t tPhi = BuzzGet(t_vm, "phi");
+         float phi = buzzobj_getfloat(tPhi);
+         printf("phi --  %f \n", phi);
 
-//       printf("%s, %u \n", str_robot_id.c_str(), t_vm->getIndex());
+         if((str_robot_id == "kiv_A1") || (str_robot_id == "kiv_B1")){
+            // BuzzGet(t_vm, "phi");
+            printf("phi --  %f; phi_index  %i; \n", phi, phiRecord);
+            phi_recorded[phiRecord] = phi;
 
-//       BuzzTableOpen(t_vm, "flow");
-      
-//       for(UInt16 i = 0; i < NUMROBOTS; i++) {
-         
-//          // buzzvm_pushs(t_vm, buzzvm_string_register(t_vm, str_robot_id.c_str(), 0));
-//          // buzzvm_pushi(t_vm, static_cast<int>(m_vecFlow[i]));
-//          // buzzvm_gstore(t_vm);
+            phiRecord++;
+         }
+   }
 
-//          // if(_m_id_to_key[i] == str_robot_id){
-//          //    BuzzTablePut(t_vm, 0, static_cast<float>(_vecFlow[i]));
-//          //    // buzzvm_pushs(t_vm, buzzvm_string_register(t_vm, str_var.c_str(), 0));
-//          //    // buzzvm_pushi(t_vm, static_cast<in   t>(m_vecFlow[i]));
-//          //    // buzzvm_gstore(t_vm);   
-//          //    LOG << " " << _m_id_to_key[i].c_str() << " " << std::endl
-//          //        << str_robot_id.c_str() << std::endl;
-
-//          //    printf("put_in_bot\n %d", i);
-//          // }
-//          // BuzzTablePut(t_vm, i, static_cast<float>(m_vecFlow[i]));
-//       }
-      
-
-
-//       /* Set the values of the table 'stimulus' in the Buzz VM */
-//       // BuzzTableOpen(t_vm, "stimulus");
-//       // for(int i = 0; i < m_vecFlow.size(); ++i) {
-//       //    BuzzTablePut(t_vm, i, static_cast<float>(m_vecFlow[i]));
-//       // }
-//       BuzzTableClose(t_vm);
-//       LOG << std::endl;
-
-
-//    }
-
-//    /** Calculated flow */
-//    float* _vecFlow;
-//    UInt16* _m_id_to_key;
-// };
-
+   /** Task counter */
+   // std::vector<int> m_vecTaskCounts;
+   // /* Task-robot mapping */
+   // std::map<int,int> m_vecRobotsTasks;
+   // /* Robot-threshold mapping */
+   // std::map<int,std::vector<float> > m_vecRobotsThresholds;
+};
 /****************************************/
 /****************************************/
 
@@ -88,7 +54,8 @@ void CIntermittentModel::Init(TConfigurationNode &t_tree)
 {
    /* Call parent Init() */
 
-   printf("init\n");
+   // printf("init\n");
+   m_cOutFile.open("output_phi_log.txt");
 
    CBuzzLoopFunctions::Init(t_tree);
    // m_vecFlow.resize(NUMROBOTS);
@@ -103,7 +70,7 @@ void CIntermittentModel::Reset()
 {
    /* Reset the flow */
 
-   printf("resetting\n");
+   // printf("resetting\n");
 }
 
 /****************************************/
@@ -153,6 +120,7 @@ void CIntermittentModel::resetLists(){
 
 void CIntermittentModel::PostStep()
 {
+   totalSteps++;
    if(stepssince == 0){
       resetLists();
       CRABMedium& cMedium = GetSimulator().GetMedium<CRABMedium>("rab");
@@ -195,7 +163,7 @@ void CIntermittentModel::PostStep()
       for (auto path : all_all_paths)
          
          for (UInt16 node : path){
-            printf(" %u, %f \n",   (unsigned int)node, m_vecFlow[(unsigned int) node]);
+            // printf(" %u, %f \n",   (unsigned int)node, m_vecFlow[(unsigned int) node]);
             m_vecFlow[(unsigned int) node] = m_vecFlow[(unsigned int) node] + 1.0;
          }
    //  
@@ -204,11 +172,23 @@ void CIntermittentModel::PostStep()
    
    for (int k = 0; k < NUMROBOTS; k++)
    {
-      printf("here %u \n", k);
-      printf("flow %u \n", m_vecFlow[k]);
+      // printf("here %u \n", k);
+      // printf("flow %u \n", m_vecFlow[k]);
 
       BuzzPut(m_id_to_key[k], "flow", m_vecFlow[k]);
    }
+
+   logData();
+}
+
+
+void CIntermittentModel::logData()
+{
+   phiRecord = 0;
+   BuzzForeachVM(GetRobotData());
+   
+   m_cOutFile << phi_recorded[0] << ", "<<phi_recorded[1] << "\n";
+   // printf("%f, %f", phi_recorded[0], phi_recorded[1]);
 }
 
 /****************************************/
@@ -310,6 +290,10 @@ std::vector<std::vector<UInt16>> CIntermittentModel::GetPath(UInt16 i, UInt16 j,
 bool CIntermittentModel::IsExperimentFinished()
 {
    /* Feel free to try out custom ending conditions */
+   if(totalSteps > maxSteps){
+      m_cOutFile.close();
+      return true;
+   }
    return false;
 }
 

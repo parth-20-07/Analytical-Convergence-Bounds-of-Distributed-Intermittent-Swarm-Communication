@@ -33,4 +33,8 @@ argos3/core/utility/math/rng.h
 -
 argos3/plugins/simulator/media/rab_medium.h
 -
+iostream
+-
+fstream
+-
 

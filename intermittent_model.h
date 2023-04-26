@@ -8,6 +8,8 @@
 #include <buzz/argos/buzz_loop_functions.h>
 #include <argos3/core/utility/math/rng.h>
 #include <argos3/plugins/simulator/media/rab_medium.h>
+#include <iostream>
+#include <fstream> 
 
 #define NUMROBOTS 30
 #define INF 9999
@@ -74,6 +76,8 @@ private:
    */
    void resetLists();
 
+   void logData();
+
    void findNetworks();
    /**
     * Extracts the path for any two nodes after the Floyd Warshall algorithm is run
@@ -106,12 +110,16 @@ private:
    std::string m_strOutFile;
 
    /** The output file stream */
-   std::ofstream m_cOutFile;
 
    /** Random number generator */
    CRandom::CRNG *m_pcRNG;
 
    int stepssince = 0;
+
+   int totalSteps = 0;
+
+   int maxSteps = 7000;
+
 };
 
 #endif
