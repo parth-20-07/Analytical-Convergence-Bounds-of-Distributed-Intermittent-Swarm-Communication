@@ -14,8 +14,8 @@ networkID = 0
 curiosity = 0.0
 stepsSinceStart = 0
 utility = 1.0
-a = 1.0
-ao = 1.0
+a = 0.40
+a_offset = 0.20
 
 stepsSinceBroadcasted1 = 0
 stepsSinceBroadcasted2 = 0
@@ -66,6 +66,7 @@ function step() {
 			neighborBroadcast()
 		}
 		moveTowardsPoint(waypointX, waypointY)
+		evaluatePhi()
 	}
 	updateVariables()
 }
@@ -196,7 +197,7 @@ function updateVariables(){
 		}
 		#log("connectability", connectability)
 		#check for if it is becoming a data mule. If it is, send a packet to inform the network.
-		evaluatePhi()
+		
 		if(phi < 0.0){
 			if(id == 0){}else{
 				#send reset curiosity message
@@ -230,9 +231,14 @@ function neighborBroadcast(){
 }
 
 function evaluatePhi(){
-	#flow_p = flow * 1.0
+	flow_p = flow * 1.0
 	#if(id == 0){phi = 2}else{
-		phi =  ((a * 1 + ao) - (b* (curiosity * (connectability) ) ))
+	#log("flow ", flow)
+
+		#log("flow ", a * flow_p)
+		phi_m = (a * flow_p)
+		phi_c = (b* (curiosity * (connectability) ) )
+		phi =  phi_m - phi_c + a_offset
 	#}
 	#log("phi ", phi, "; phi_conn = ", b*(curiosity * (connectability)), "; phi_a = ", (a * 1 + ao))
 }

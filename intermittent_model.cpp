@@ -176,7 +176,7 @@ void CIntermittentModel::PostStep()
          
          for (UInt16 node : path){
             // printf(" %u, %f \n",   (unsigned int)node, m_vecFlow[(unsigned int) node]);
-            m_vecFlow[(unsigned int) node] = m_vecFlow[(unsigned int) node] + 1.0;
+            m_vecFlow[(unsigned int) node] = m_vecFlow[(unsigned int) node] + 1.001;
          }
    //  
    }  
