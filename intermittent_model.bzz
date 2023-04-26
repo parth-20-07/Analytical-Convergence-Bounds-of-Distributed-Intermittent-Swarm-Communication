@@ -14,7 +14,7 @@ networkID = 0
 curiosity = 0.0
 stepsSinceStart = 0
 utility = 1.0
-a = 2.0
+a = 1.0
 ao = 1.0
 
 stepsSinceBroadcasted1 = 0
@@ -32,6 +32,8 @@ centerY = 0
 waypointX = 0
 waypointY = 0
 
+expellStep = 0.0
+
 phi = 0
 	if(pose.position.x > 0){
 		networkToReach = 1
@@ -47,6 +49,7 @@ phi = 0
 }
 
 function step() {
+	
 	listen()
 	if(stepsSinceStart > 10){
 		isLeader = ((id == 0))
@@ -141,7 +144,7 @@ function listen(){
 					if(taskID == 1){
 						taskID = 0
 						networkToReach = value
-						resetCuriosity()
+						resetCuriosity(0.0)
 					}
 				}
 				neighborBroadcast()
@@ -153,7 +156,7 @@ function listen(){
 	neighbors.listen("curiosityReset",
    function(vid, value, rid) {
 			if(stepsSinceBroadcasted2 >= 0){
-      	resetCuriosity()
+      	resetCuriosity(value)
 				stepsSinceBroadcasted2 = -10
 			}
    }
@@ -195,24 +198,30 @@ function updateVariables(){
 		#check for if it is becoming a data mule. If it is, send a packet to inform the network.
 		evaluatePhi()
 		if(phi < 0.0){
-			#send reset curiosity message
-			resetCuriosity()
-			if(networkID == 0){
-				networkToReach = 1
-			}else{
-				networkToReach = 0
+			if(id == 0){}else{
+				#send reset curiosity message
+				resetCuriosity(1.0)
+				if(networkID == 0){
+					networkToReach = 1
+				}else{
+					networkToReach = 0
+				}
+				#networkToReach = !networkID
+				taskID = 1
 			}
-			#networkToReach = !networkID
-			taskID = 1
 		}else{
 		}
 	}
 }
 
-function resetCuriosity(){
+function resetCuriosity( isExpulsion ){
 	log("curiosity reset for -- ", id)
 	curiosity = 0
-	neighbors.broadcast("curiosityReset", 1)
+	expellStep = isExpulsion
+	neighbors.broadcast("curiosityReset", isExpulsion)
+	if(isExpulsion){}else{
+		log("admit logged ", id)
+	}
 }
 
 function neighborBroadcast(){
@@ -222,9 +231,9 @@ function neighborBroadcast(){
 
 function evaluatePhi(){
 	#flow_p = flow * 1.0
-	if(id == 0){phi = 2}else{
+	#if(id == 0){phi = 2}else{
 		phi =  ((a * 1 + ao) - (b* (curiosity * (connectability) ) ))
-	}
+	#}
 	#log("phi ", phi, "; phi_conn = ", b*(curiosity * (connectability)), "; phi_a = ", (a * 1 + ao))
 }
 ############################################ Supporting Methods ############################################

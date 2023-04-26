@@ -8,7 +8,11 @@
 std::ofstream m_cOutFile;
 
 float* phi_recorded = new float[2];
+float* expellStep = new float[2];
 int phiRecord = 0;
+
+
+   int totalSteps = 0;
 
 /**
  * Functor to get data from the robots
@@ -29,12 +33,20 @@ struct GetRobotData : public CBuzzLoopFunctions::COperation {
             
          buzzobj_t tPhi = BuzzGet(t_vm, "phi");
          float phi = buzzobj_getfloat(tPhi);
-         printf("phi --  %f \n", phi);
+         // printf("phi --  %f \n", phi);
+         
+         buzzobj_t tExpell= BuzzGet(t_vm, "expellStep");
+         float expellstep = buzzobj_getfloat(tExpell);
+         if(expellstep > 0.0) printf("expellstep --  %f \n", expellstep);
+         
 
-         if((str_robot_id == "kiv_A1") || (str_robot_id == "kiv_B1")){
+         if((str_robot_id == "kiv_A0") || (str_robot_id == "kiv_B0")){
             // BuzzGet(t_vm, "phi");
-            printf("phi --  %f; phi_index  %i; \n", phi, phiRecord);
+            // printf("phi --  %f; phi_index  %i; \n", phi, phiRecord);
+            if(expellstep > 0.0) printf("expellstep --  %i \n", totalSteps);
+            
             phi_recorded[phiRecord] = phi;
+            expellStep[phiRecord] = expellstep;
 
             phiRecord++;
          }
@@ -187,7 +199,7 @@ void CIntermittentModel::logData()
    phiRecord = 0;
    BuzzForeachVM(GetRobotData());
    
-   m_cOutFile << phi_recorded[0] << ", "<<phi_recorded[1] << "\n";
+   m_cOutFile << phi_recorded[0] << ", " << expellStep[0] << ", " <<phi_recorded[1] << ", " << expellStep[1] << "\n";
    // printf("%f, %f", phi_recorded[0], phi_recorded[1]);
 }
 
