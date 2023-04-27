@@ -14,7 +14,7 @@ networkID = 0
 curiosity = 0.0
 stepsSinceStart = 0
 utility = 1.0
-a = 0.40
+a = 0.70
 a_offset = 0.20
 
 stepsSinceBroadcasted1 = 0
@@ -219,10 +219,10 @@ function updateVariables(){
 
 function resetCuriosity( isExpulsion ){
 	log("curiosity reset for -- ", id)
-	curiosity = 0
 	expellStep = isExpulsion
 	if(isExpulsion == 1.0){
 		expellStepsSince = 0
+		curiosity = 0.0
 	}
 	neighbors.broadcast("curiosityReset", isExpulsion)
 	if(isExpulsion){}else{
