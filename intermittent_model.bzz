@@ -14,13 +14,13 @@ function init() {
 	curiosity = 0.0
 	stepsSinceStart = 0
 	utility = 1.0
-	a = 0.30
+	a = 0.7
 	a_offset = 0.0
 
 	stepsSinceBroadcasted1 = 0
 	stepsSinceBroadcasted2 = 0
 	expellStepsSince = 0
-	b = 6.50
+	b = 1.0
 	curiosity_increase = 0.001
 	originalNetworkID = 0
 	c0 = 0
