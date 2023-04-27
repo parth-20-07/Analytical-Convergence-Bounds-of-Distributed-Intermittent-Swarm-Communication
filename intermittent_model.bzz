@@ -8,34 +8,34 @@
 function init() {
 	math.rng.setseed(id)
 	
-taskID = 0
-networkToReach = 0
-networkID = 0
-curiosity = 0.0
-stepsSinceStart = 0
-utility = 1.0
-a = 0.70
-a_offset = 0.20
+	taskID = 0
+	networkToReach = 0
+	networkID = 0
+	curiosity = 0.0
+	stepsSinceStart = 0
+	utility = 1.0
+	a = 0.70
+	a_offset = 0.0
 
-stepsSinceBroadcasted1 = 0
-stepsSinceBroadcasted2 = 0
-expellStepsSince = 0
-b = 1.3
-curiosity_increase = 0.001
-originalNetworkID = 0
-c0 = 0
-#bo = 1
-#flow = 1.0
-connectability = 1.0
-centerX = 0
-centerY = 0
+	stepsSinceBroadcasted1 = 0
+	stepsSinceBroadcasted2 = 0
+	expellStepsSince = 0
+	b = 1.7
+	curiosity_increase = 0.001
+	originalNetworkID = 0
+	c0 = 0
+	#bo = 1
+	#flow = 1.0
+	connectability = 1.0
+	centerX = 0
+	centerY = 0
 
-waypointX = 0
-waypointY = 0
+	waypointX = 0
+	waypointY = 0
 
-expellStep = 0.0
+	expellStep = 0.0
 
-phi = 0
+	phi = 0
 	if(pose.position.x > 0){
 		networkToReach = 1
 		networkID = 1
@@ -241,9 +241,9 @@ function evaluatePhi(){
 	#log("flow ", flow)
 
 		#log("flow ", a * flow_p)
-		phi_m = (a * flow_p)
+		phi_u = (a * flow_p)
 		phi_c = (b* (curiosity * (connectability) ) )
-		phi =  phi_m - phi_c + a_offset
+		phi =  phi_u - phi_c
 	#}
 	#log("phi ", phi, "; phi_conn = ", b*(curiosity * (connectability)), "; phi_a = ", (a * 1 + ao))
 }
