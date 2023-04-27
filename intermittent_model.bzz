@@ -14,13 +14,16 @@ function init() {
 	curiosity = 0.0
 	stepsSinceStart = 0
 	utility = 1.0
-	a = 0.7
+	a = 0.3
 	a_offset = 0.0
+
+	stopMovement = 0
 
 	stepsSinceBroadcasted1 = 0
 	stepsSinceBroadcasted2 = 0
+	stepsSinceBroadcasted3 = 0
 	expellStepsSince = 0
-	b = 1.0
+	b = 7.50
 	curiosity_increase = 0.001
 	originalNetworkID = 0
 	c0 = 0
@@ -96,6 +99,8 @@ function moveTowardsPoint(){
 	offsetx = (waypointX - pose.position.x) 
 	offsety = (waypointY - pose.position.y)
 
+	if(stopMovement){set_wheels(0.0,0.0)}else{
+
 	if ((proximity[0].value > 0.6) or (proximity[1].value > 0.6) or (proximity[7].value > 0.6)){
 		set_wheels(-10.0,10.0)
 	}else{
@@ -109,6 +114,7 @@ function moveTowardsPoint(){
 		linear = 10 * math.cos(offsetYaw)
 
 		set_wheels(leftWheelTurn + linear, rightWheelTurn + linear)
+	}
 	}
 }
 
@@ -150,7 +156,14 @@ function listen(){
 					}
 				}
 				neighborBroadcast()
-				stepsSinceBroadcasted1 = -10
+				stepsSinceBroadcasted1 = -3
+			}
+
+			if(id == 0){
+				if(networkID == 0){
+					log("gotNeighborValue")
+					if(value == 1){broadcastStop()}
+				}
 			}
    }
 	)
@@ -159,6 +172,15 @@ function listen(){
    function(vid, value, rid) {
 			if(stepsSinceBroadcasted2 >= 0){
       	resetCuriosity(value)
+				stepsSinceBroadcasted2 = -10
+			}
+   }
+	)
+
+	neighbors.listen("stop", 
+		function(vid, value, rid) {
+			if(stepsSinceBroadcasted3 >= 0){
+      	broadcastStop()
 				stepsSinceBroadcasted2 = -10
 			}
    }
@@ -187,6 +209,7 @@ function updateVariables(){
 	stepsSinceStart = stepsSinceStart + 1
 	stepsSinceBroadcasted1	= stepsSinceBroadcasted1 + 1
 	stepsSinceBroadcasted2  = stepsSinceBroadcasted2 + 1
+	stepsSinceBroadcasted3  = stepsSinceBroadcasted3 + 1
 	expellStepsSince = expellStepsSince + 1
 
 	if(taskID == 0){
@@ -218,7 +241,7 @@ function updateVariables(){
 }
 
 function resetCuriosity( isExpulsion ){
-	log("curiosity reset for -- ", id)
+	#log("curiosity reset for -- ", id)
 	expellStep = isExpulsion
 	if(isExpulsion == 1.0){
 		expellStepsSince = 0
@@ -226,13 +249,19 @@ function resetCuriosity( isExpulsion ){
 	}
 	neighbors.broadcast("curiosityReset", isExpulsion)
 	if(isExpulsion){}else{
-		log("admit logged ", id)
+		#log("admit logged ", id)
 	}
 }
 
 function neighborBroadcast(){
 	#log("network broadcasted for ", id)
 	neighbors.broadcast("network", networkID)
+}
+
+function broadcastStop(){
+	stopMovement = 1
+	neighbors.broadcast("stop", 0)
+	stepsSinceBroadcasted3 = -10
 }
 
 function evaluatePhi(){
